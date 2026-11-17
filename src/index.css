@@ -1,0 +1,129 @@
+/* 顏色見 docs/HANDOFF.md 第 4 節 */
+:root {
+  --paper: #f6f2e9;
+  --ink: #1e2b3c;
+  --muted: #5b5446;
+  --tab-idle: #6b6457;
+  --unvisited: #e3ddd0;
+  --visited-some: #9cc5b0;
+  --visited-half: #3f8f6e;
+  --complete: #d9a441;
+  --stamp-red: #c8352b;
+  --green-ink: #1f6b52;
+
+  --font-sans: 'Noto Sans TC', 'Noto Sans CJK HK', 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+  --font-serif: 'Noto Serif TC', 'Noto Serif CJK TC', 'PMingLiU', serif;
+
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-sans);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+}
+
+.app {
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  flex: 1;
+  overflow-y: auto;
+  padding: calc(env(safe-area-inset-top) + 52px) 20px 24px;
+}
+
+.page-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+
+.placeholder {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.progress {
+  margin-top: 24px;
+}
+
+.progress-count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.big-number {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 48px;
+  line-height: 1;
+}
+
+.muted {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.progress-bar {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(18, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.progress-bar span {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--unvisited);
+}
+
+.tabbar {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #ffffff;
+  border-top: 1px solid var(--unvisited);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 11px;
+  color: var(--tab-idle);
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--green-ink);
+  font-weight: 700;
+}
