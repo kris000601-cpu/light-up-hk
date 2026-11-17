@@ -20,5 +20,12 @@
 - `design/`：設計稿（截圖、可以直接打開的 HTML、原始設計文件）。
 - `tools/`：數據處理腳本。
 
+## 開發
+- Vite 8 + React 19 + TypeScript，PWA 用 vite-plugin-pwa。`npm run dev` 本機開發，`npm run build` 打包，`npm run icons` 由 `public/favicon.svg` 重新生成圖示。
+- 推送到 GitHub `main` 分支就會自動部署（`.github/workflows/deploy.yml`）。倉庫：github.com/kris000601-cpu/light-up-hk
+- Chris 的電腦開了 Windows「智能應用控制」，會擋沒簽名的原生 `.node` 文件，所以 `package.json` 用 `overrides` 把 rollup 換成 `@rollup/wasm-node`。不要刪，也不要叫 Chris 關掉這個安全功能。
+- 跟 Chris 溝通一律用簡體中文。
+
 ## 當前進度
-還沒開始寫代碼。下一步：HANDOFF.md 第 7 節的 M0。
+- M0 完成（2026-11-17）：空殼已上線 https://kris000601-cpu.github.io/light-up-hk/
+- 下一步：M1 全港地圖。開工前要 Chris 決定首頁用第 1 屏（現代風）還是第 6 屏（和風金雲）。
