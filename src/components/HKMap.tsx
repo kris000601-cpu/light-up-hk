@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react'
+import { useId, useMemo, useRef, type CSSProperties } from 'react'
 import { DISTRICTS, MAP_H, MAP_W, label, type District } from '../lib/districts'
 import { useMapZoom } from '../lib/useMapZoom'
 
@@ -14,23 +14,13 @@ interface Props {
 export function HKMap({ selected, onSelect, onOpen }: Props) {
   const clipId = useId()
   const boxRef = useRef<HTMLDivElement>(null)
-  const { view, zoomed, reset } = useMapZoom(boxRef, MAP_W, MAP_H)
+  const { view, base, zoomed, fade, reset } = useMapZoom(boxRef, MAP_W, MAP_H)
   const lit = DISTRICTS.filter((d) => d.visited > 0).length
 
-  // 標籤放在區的中心上方，跟着地圖縮放移動；靠邊時往裏收，免得出界；區中心移出畫面就不顯示
-  const cx = selected ? ((selected.center[0] - view.x) / view.w) * 100 : 0
-  const cy = selected ? ((selected.center[1] - view.y) / view.h) * 100 : 0
-  const tagVisible = selected && cx >= 0 && cx <= 100 && cy >= 4 && cy <= 100
-  const tagLeft = Math.min(84, Math.max(16, cx))
-
-  return (
-    <div ref={boxRef} className={`hkmap${zoomed ? ' is-zoomed' : ''}`} style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }}>
-      <svg
-        viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-        role="img"
-        aria-label={`全港 18 區地圖：已點亮 ${lit} 區${selected ? `；目前選中${label(selected)}，${selected.visited} / ${selected.total} 個景點` : ''}`}
-        onClick={() => onSelect(null)}
-      >
+  // 地圖內容只在選中的區改變時才重建；手指移動時不碰它，只改下面的 transform
+  const content = useMemo(
+    () => (
+      <>
         <g className="hkmap-districts">
           {DISTRICTS.map((d) => (
             <path
@@ -56,7 +46,36 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
             <path className="hkmap-selected" d={selected.d} clipPath={`url(#${clipId})`} />
           </>
         )}
-      </svg>
+      </>
+    ),
+    [selected, onSelect, clipId],
+  )
+
+  // 手指移動中：SVG 仍按 base 畫好不動，用顯卡把它平移 / 縮放到 view 的位置
+  const s = base.w / view.w
+  const tx = ((base.x - view.x) / view.w) * 100
+  const ty = ((base.y - view.y) / view.h) * 100
+  const moving = s !== 1 || tx !== 0 || ty !== 0
+
+  // 標籤放在區的中心上方，跟着地圖縮放移動；靠邊時往裏收，免得出界；區中心移出畫面就不顯示
+  const cx = selected ? ((selected.center[0] - view.x) / view.w) * 100 : 0
+  const cy = selected ? ((selected.center[1] - view.y) / view.h) * 100 : 0
+  const tagVisible = selected && cx >= 0 && cx <= 100 && cy >= 4 && cy <= 100
+  const tagLeft = Math.min(84, Math.max(16, cx))
+
+  return (
+    <div ref={boxRef} className={`hkmap${zoomed ? ' is-zoomed' : ''}`} style={{ aspectRatio: `${MAP_W} / ${MAP_H}` }}>
+      <div className="hkmap-view" style={{ '--fade': `${fade}px` } as CSSProperties}>
+        <svg
+          viewBox={`${base.x} ${base.y} ${base.w} ${base.h}`}
+          style={moving ? { transform: `translate(${tx}%, ${ty}%) scale(${s})` } : undefined}
+          role="img"
+          aria-label={`全港 18 區地圖：已點亮 ${lit} 區${selected ? `；目前選中${label(selected)}，${selected.visited} / ${selected.total} 個景點` : ''}`}
+          onClick={() => onSelect(null)}
+        >
+          {content}
+        </svg>
+      </div>
 
       {tagVisible && (
         <button

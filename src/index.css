@@ -151,26 +151,34 @@ button {
   -webkit-touch-callout: none;
 }
 
-.hkmap > svg {
+.hkmap-view {
+  width: 100%;
+  height: 100%;
+}
+
+.hkmap-view > svg {
   display: block;
   width: 100%;
   height: 100%;
   overflow: visible;
+  /* 手指移動時用顯卡平移 / 縮放這一層，不重畫地圖 */
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
-/* 放大後：地圖框外的部分裁掉，不加框；四邊約 18px 內漸漸淡入紙色，沒有硬邊 */
-.hkmap.is-zoomed > svg {
+/* 放大後：框外的部分裁掉，不加框；四邊漸漸淡入紙色。淡出寬度 --fade 隨放大程度從 0 長到 18px（見 useMapZoom），所以不會突然出現 */
+.hkmap.is-zoomed .hkmap-view {
   overflow: hidden;
   cursor: grab;
-  --fade-x: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
-  --fade-y: linear-gradient(to bottom, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  --fade-x: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+  --fade-y: linear-gradient(to bottom, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
   -webkit-mask-image: var(--fade-x), var(--fade-y);
   -webkit-mask-composite: source-in;
   mask-image: var(--fade-x), var(--fade-y);
   mask-composite: intersect;
 }
 
-.hkmap.is-zoomed > svg:active {
+.hkmap.is-zoomed .hkmap-view:active {
   cursor: grabbing;
 }
 
