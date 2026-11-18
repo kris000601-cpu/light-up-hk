@@ -61,7 +61,7 @@ export function MapPage() {
 
       <section className="map-block" aria-label="全港地圖">
         <HKMap selected={selected} onSelect={setSelected} onOpen={setDetail} />
-        <p className="map-hint">{selected ? '再點一下名字，看這個區的景點' : '點一下地圖上的區，看名字和進度'}</p>
+        <p className="map-hint">{selected ? '再點一下名字，看這個區的景點' : '點一下地圖上的區，看名字和進度；兩指可以放大地圖'}</p>
         <ul className="legend" aria-label="圖例">
           {LEGEND.map((l) => (
             <li key={l.level}>
