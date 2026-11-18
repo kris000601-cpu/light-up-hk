@@ -9,6 +9,8 @@ export interface View {
 }
 
 const MAX_SCALE = 6
+/** 放大後地圖四周可多拖出去的留白（像素）；要比 index.css 的邊緣漸隱（18px）寬 */
+const EDGE_PAD_PX = 36
 
 /**
  * 只讓地圖本身縮放：雙指捏合放大縮小、放大後單指拖動；電腦上用觸控板捏合或 Ctrl + 滾輪。
@@ -26,13 +28,17 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     (v: View) => {
       const w = Math.min(mapW, Math.max(mapW / MAX_SCALE, v.w))
       const h = (w * mapH) / mapW
-      const x = Math.min(mapW - w, Math.max(0, v.x))
-      const y = Math.min(mapH - h, Math.max(0, v.y))
+      // 放大後可以多拖出去一圈留白（比邊緣漸隱寬），讓北區等最外圈的邊界能拖到清楚的地方。
+      // 留白隨放大程度很快長滿；縮回全圖時正好歸零，所以全圖不變、也不會跳。
+      const boxW = boxRef.current?.clientWidth || mapW
+      const m = Math.min(EDGE_PAD_PX * (w / boxW), (mapW - w) * 4)
+      const x = Math.min(mapW - w + m, Math.max(-m, v.x))
+      const y = Math.min(mapH - h + m, Math.max(-m, v.y))
       const next = { x, y, w, h }
       viewRef.current = next
       setView(next)
     },
-    [mapW, mapH],
+    [boxRef, mapW, mapH],
   )
 
   /** 以畫面上某一點（相對地圖框的 0–1 位置）為中心縮放 */
