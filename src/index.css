@@ -1,15 +1,15 @@
-/* 顏色見 docs/HANDOFF.md 第 4 節 */
+/* 三墨規則（見 CLAUDE.md）：紙 / 墨藍 / 印泥紅，不加第四種顏色 */
 :root {
-  --paper: #f6f2e9;
+  --paper: #f3eddf;
+  --card: #fbf8f0;
+  --navy: #2d3e5c;
   --ink: #1e2b3c;
-  --muted: #5b5446;
-  --tab-idle: #6b6457;
-  --unvisited: #e3ddd0;
-  --visited-some: #9cc5b0;
-  --visited-half: #3f8f6e;
-  --complete: #d9a441;
-  --stamp-red: #c8352b;
-  --green-ink: #1f6b52;
+  --sub: #5c667a;
+  --hair: #c1c1be;
+  --seal: #b9473a;
+  --seal-text: #a63d31;
+  --navy-1: rgba(45, 62, 92, 0.2);
+  --navy-2: rgba(45, 62, 92, 0.48);
 
   --font-sans: 'Noto Sans TC', 'Noto Sans CJK HK', 'PingFang HK', 'Microsoft JhengHei', sans-serif;
   --font-serif: 'Noto Serif TC', 'Noto Serif CJK TC', 'PMingLiU', serif;
@@ -32,8 +32,15 @@ body,
   height: 100%;
 }
 
+/* 護照內頁的細波紋底紋 */
 body {
-  background: var(--paper);
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='12'%3E%3Cpath d='M0 6Q7.5 2.2 15 6T30 6T45 6T60 6' fill='none' stroke='%23E4DAC4' stroke-width='0.5'/%3E%3C/svg%3E");
+}
+
+button {
+  font: inherit;
+  color: inherit;
 }
 
 .app {
@@ -47,10 +54,315 @@ body {
 .page {
   flex: 1;
   overflow-y: auto;
-  padding: calc(env(safe-area-inset-top) + 52px) 20px 24px;
+  padding: calc(env(safe-area-inset-top) + 40px) 16px 20px;
 }
 
-.page-title {
+.app-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 28px;
+  letter-spacing: 4px;
+  line-height: 1.25;
+}
+
+.placeholder {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--sub);
+}
+
+/* ---------- 護照抬頭 ---------- */
+.passport-head {
+  padding: 0 4px;
+}
+
+.passport-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--navy);
+}
+
+.demo-badge {
+  margin-bottom: 6px;
+  padding: 3px 8px;
+  border: 1px dashed var(--navy);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--sub);
+}
+
+.passport-stats {
+  margin: 14px 0 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1.5px solid var(--navy);
+  border-bottom: 1px solid var(--navy);
+}
+
+.passport-stats > div {
+  padding: 7px 0 8px 12px;
+  border-left: 1px solid var(--hair);
+}
+
+.passport-stats > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.passport-stats dt {
+  font-size: 11px;
+  color: var(--sub);
+}
+
+.passport-stats dd {
+  margin: 1px 0 0;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.passport-stats small,
+.district-progress small {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sub);
+}
+
+/* ---------- 地圖 ---------- */
+.map-block {
+  margin-top: 16px;
+}
+
+.hkmap {
+  position: relative;
+  width: 100%;
+}
+
+.hkmap svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hkmap-districts path {
+  stroke: var(--navy);
+  stroke-width: 0.7px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+}
+
+.hkmap-selected {
+  fill: none;
+  stroke: var(--ink);
+  /* 一半在區外被裁掉，所以實際看到的是 3px，只在區內側 */
+  stroke-width: 6px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.hkmap-tag {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  height: 34px;
+  padding: 0 8px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(30, 43, 60, 0.12);
+  cursor: pointer;
+  animation: tag-in 0.18s ease-out;
+}
+
+.hkmap-tag::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 9px;
+  height: 9px;
+  background: var(--card);
+  border-right: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+@keyframes tag-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-100% - 4px));
+  }
+}
+
+.hkmap-tag-name {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.hkmap-tag-count,
+.map-hint,
+.legend {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.map-hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
+
+.legend {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--navy);
+  background: var(--card);
+}
+
+.level-1 {
+  background: var(--navy-1);
+}
+
+.level-2 {
+  background: var(--navy-2);
+}
+
+.level-3 {
+  background: var(--seal);
+}
+
+/* ---------- 港島 / 九龍 / 新界 ---------- */
+.region-tabs {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.region-tab {
+  height: 40px;
+  border: 1px solid var(--navy);
+  border-radius: 20px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.region-name {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.region-count {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.credit {
+  margin: 18px 0 0;
+  font-size: 10px;
+  color: var(--sub);
+  opacity: 0.8;
+}
+
+/* ---------- 底部彈出面板 ---------- */
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 43, 60, 0.38);
+  animation: fade-in 0.2s ease-out;
+}
+
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 82vh;
+  overflow-y: auto;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+  background: var(--card);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -6px 24px rgba(30, 43, 60, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  outline: none;
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.sheet-grip {
+  align-self: center;
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--hair);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheet-title {
   margin: 0;
   font-family: var(--font-serif);
   font-weight: 900;
@@ -58,55 +370,204 @@ body {
   letter-spacing: 2px;
 }
 
-.placeholder {
-  margin: 12px 0 0;
+.sheet-sub {
+  font-size: 13px;
+  color: var(--sub);
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 3px;
+  background: #e8e3d6;
+  border-radius: 12px;
+}
+
+.seg {
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
   font-size: 14px;
-  color: var(--muted);
+  color: var(--sub);
+  cursor: pointer;
 }
 
-.progress {
-  margin-top: 24px;
+.seg.active {
+  background: #fffdf8;
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(30, 43, 60, 0.12);
 }
 
-.progress-count {
+.district-list,
+.spot-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.district-row {
+  width: 100%;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #d6d3ca;
+  background: none;
   display: flex;
-  align-items: baseline;
-  gap: 4px;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
 }
 
-.big-number {
+.district-list li:last-child .district-row {
+  border-bottom: 0;
+}
+
+.district-row .swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.district-name {
+  flex-grow: 1;
   font-family: var(--font-serif);
   font-weight: 900;
-  font-size: 48px;
-  line-height: 1;
+  font-size: 17px;
 }
 
-.muted {
-  font-size: 16px;
-  color: var(--muted);
+.district-name.dim,
+.row-note,
+.row-count,
+.district-row svg {
+  color: var(--sub);
 }
 
-.progress-bar {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(18, minmax(0, 1fr));
+.row-note {
+  font-size: 12px;
+}
+
+.row-count {
+  width: 36px;
+  text-align: right;
+  font-size: 13px;
+}
+
+.dots {
+  display: flex;
   gap: 3px;
 }
 
-.progress-bar span {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--unvisited);
+.dot {
+  width: 12px;
+  height: 5px;
+  border-radius: 2px;
+  background: #dcd9d0;
 }
 
+.dot.on.level-1 {
+  background: var(--navy-1);
+}
+
+.dot.on.level-2 {
+  background: var(--navy-2);
+}
+
+.dot.on.level-3 {
+  background: var(--seal);
+}
+
+/* ---------- 區詳情 ---------- */
+.district-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--navy);
+}
+
+.district-progress .big {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.spot {
+  min-height: 64px;
+  padding: 10px 0;
+  border-bottom: 1px solid #d6d3ca;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spot:last-child {
+  border-bottom: 0;
+}
+
+.spot-mark {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1.5px dashed var(--hair);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.spot.done .spot-mark {
+  border: 1.5px solid var(--seal);
+  color: var(--seal);
+  transform: rotate(-6deg);
+}
+
+.spot-text {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spot-name {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.spot-tip {
+  font-size: 12px;
+  color: var(--sub);
+  line-height: 1.5;
+}
+
+.spot-state {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.spot.done .spot-state {
+  color: var(--seal-text);
+  font-weight: 700;
+}
+
+/* ---------- 底部分頁 ---------- */
 .tabbar {
   flex-shrink: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   height: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: #ffffff;
-  border-top: 1px solid var(--unvisited);
+  background: var(--card);
+  border-top: 1px solid var(--hair);
 }
 
 .tab {
@@ -117,13 +578,20 @@ body {
   gap: 3px;
   border: 0;
   background: none;
-  font: inherit;
   font-size: 11px;
-  color: var(--tab-idle);
+  color: var(--sub);
   cursor: pointer;
 }
 
 .tab.active {
-  color: var(--green-ink);
+  color: var(--navy);
   font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+  }
 }
