@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<title>方案 A · 九龍各區列表</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@700;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2D3E5C}a:hover{color:#1E2B3C}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Noto Sans TC', 'PingFang HK', sans-serif; color: #1E2B3C; background: #F3EDDF">
+<img src="/_blob/b9a55d4f8c2cc0e6b01877e2eda54444" alt="" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+<img src="/_blob/ee5bb86791d4f44af8eccc6453991a6b" alt="" style="position: absolute; left: 16px; top: 184px; width: 358px; height: 264px">
+<a href="A-Home.dc.html" aria-label="關閉列表" style="position: absolute; inset: 0; background: rgba(30, 43, 60, 0.38); display: block"></a>
+
+<section role="dialog" aria-label="九龍各區" style="position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 20px 34px 20px; background: #FBF8F0; border-radius: 22px 22px 0 0; box-shadow: 0 -6px 24px rgba(30, 43, 60, 0.18); display: flex; flex-direction: column; gap: 14px">
+<span aria-hidden="true" style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #C1C1BE"></span>
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<h2 style="margin: 0; font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 22px; letter-spacing: 2px">九龍</h2>
+<span style="font-size: 13px; color: #5C667A">已點亮 2 / 5 區 · 景點章 5 / 23</span>
+</div>
+<div role="tablist" aria-label="地區" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; background: #E8E3D6; border-radius: 12px">
+<a href="#hk-island" role="tab" aria-selected="false" style="height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #5C667A; font-size: 14px">港島</a>
+<a href="#kowloon" role="tab" aria-selected="true" style="height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #1E2B3C; background: #FFFDF8; font-size: 14px; font-weight: 700; box-shadow: 0 1px 2px rgba(30, 43, 60, 0.12)">九龍</a>
+<a href="#new-territories" role="tab" aria-selected="false" style="height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; text-decoration: none; color: #5C667A; font-size: 14px">新界</a>
+</div>
+
+<div style="display: flex; flex-direction: column">
+<a href="#ytm" style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #D6D3CA; text-decoration: none; color: #1E2B3C">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 3px; background: rgba(45, 62, 92, 0.5)"></span>
+<span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 17px; flex-grow: 1">油尖旺</span>
+<span aria-hidden="true" style="display: flex; gap: 3px"><span style="width: 12px; height: 5px; border-radius: 2px; background: rgba(45, 62, 92, 0.5)"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: rgba(45, 62, 92, 0.5)"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: rgba(45, 62, 92, 0.5)"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: rgba(45, 62, 92, 0.5)"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: #DCD9D0"></span></span>
+<span style="width: 34px; text-align: right; font-size: 13px; color: #5C667A">4 / 5</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C667A" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<a href="#klc" style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #D6D3CA; text-decoration: none; color: #1E2B3C">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 3px; background: rgba(45, 62, 92, 0.22)"></span>
+<span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 17px; flex-grow: 1">九龍城</span>
+<span aria-hidden="true" style="display: flex; gap: 3px"><span style="width: 12px; height: 5px; border-radius: 2px; background: rgba(45, 62, 92, 0.22)"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: #DCD9D0"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: #DCD9D0"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: #DCD9D0"></span><span style="width: 12px; height: 5px; border-radius: 2px; background: #DCD9D0"></span></span>
+<span style="width: 34px; text-align: right; font-size: 13px; color: #5C667A">1 / 5</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C667A" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<a href="#ssp" style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #D6D3CA; text-decoration: none; color: #1E2B3C">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid #2D3E5C; box-sizing: border-box"></span>
+<span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 17px; flex-grow: 1; color: #5C667A">深水埗</span>
+<span style="font-size: 12px; color: #5C667A">還沒去過</span>
+<span style="width: 34px; text-align: right; font-size: 13px; color: #5C667A">0 / 5</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C667A" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<a href="#wts" style="height: 58px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #D6D3CA; text-decoration: none; color: #1E2B3C">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid #2D3E5C; box-sizing: border-box"></span>
+<span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 17px; flex-grow: 1; color: #5C667A">黃大仙</span>
+<span style="font-size: 12px; color: #5C667A">還沒去過</span>
+<span style="width: 34px; text-align: right; font-size: 13px; color: #5C667A">0 / 4</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C667A" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+<a href="#kt" style="height: 58px; display: flex; align-items: center; gap: 12px; text-decoration: none; color: #1E2B3C">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid #2D3E5C; box-sizing: border-box"></span>
+<span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 17px; flex-grow: 1; color: #5C667A">觀塘</span>
+<span style="font-size: 12px; color: #A63D31; font-weight: 700">下一站 3.2 公里</span>
+<span style="width: 34px; text-align: right; font-size: 13px; color: #5C667A">0 / 4</span>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5C667A" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</a>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

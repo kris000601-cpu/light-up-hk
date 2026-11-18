@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<title>方案 A · 入境章 版二 · 圓形入境章</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&amp;family=Noto+Serif+TC:wght@700;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2D3E5C}a:hover{color:#1E2B3C}
+.stage{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;outline:none}
+.stage:focus-visible{box-shadow:inset 0 0 0 2px #2D3E5C}
+.stage.done{cursor:default;animation:thud .28s ease-out}
+@keyframes thud{0%,100%{transform:none}30%{transform:translateY(3px)}}
+@keyframes wet{from{opacity:1;filter:saturate(1.3) brightness(.9)}to{opacity:.95;filter:none}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rise{animation:rise .5s .45s ease both}
+.full .hint{color:#B9473A;font-weight:700}
+
+.tool{transform:translateY(-44px);transition:transform .25s ease-out}
+.idle .tool{animation:float 2.6s ease-in-out infinite alternate}
+@keyframes float{from{transform:translateY(-44px)}to{transform:translateY(-50px)}}
+.press .tool{transform:none;transition:transform 900ms cubic-bezier(.4,0,.5,1)}
+.full .tool{animation:quiver .1s linear infinite alternate}
+.done .tool{animation:lift .55s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes quiver{from{transform:translateY(1px) rotate(-.35deg)}to{transform:translateY(1px) rotate(.35deg)}}
+@keyframes lift{from{transform:translateY(1px);opacity:1}to{transform:translateY(-150px);opacity:0}}
+.shadow{opacity:.14;transform:scale(1.1);transition:opacity .25s,transform .25s}
+.press .shadow,.full .shadow{opacity:.85;transform:scale(.92);transition:opacity 900ms,transform 900ms}
+.done .shadow{opacity:0;transition:opacity .3s}
+.imprint{opacity:0}
+.done .imprint{animation:wet 1.6s ease-out both}
+.bar{transform:scaleX(0);transform-origin:left;transition:transform .2s}
+.press .bar,.full .bar{transform:none;transition:transform 900ms linear}
+@media (prefers-reduced-motion: reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Noto Sans TC', 'PingFang HK', sans-serif; color: #1E2B3C; background: #F3EDDF">
+<img src="/_blob/b9a55d4f8c2cc0e6b01877e2eda54444" alt="" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+
+<div style="position: absolute; left: 8px; right: 20px; top: 44px; display: flex; align-items: center; justify-content: space-between">
+<a href="A-Home.dc.html" aria-label="返回地圖" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E2B3C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="font-size: 11px; letter-spacing: 5px; color: #2D3E5C">遊歷護照 · 第 12 頁</span>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; top: 100px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 13px; color: #5C667A">你已到達</span>
+<h1 style="margin: 0; font-family: 'Noto Serif TC', 'PMingLiU', serif; font-weight: 900; font-size: 27px; letter-spacing: 2px">尖沙咀鐘樓 · 星光大道</h1>
+<span style="font-size: 13px; color: #5C667A">尖沙咀 · 油尖旺 · 距離 24 米 · 第 2 次來</span>
+</div>
+
+<div class="stage {{phase}}" role="button" tabIndex="0" aria-label="按住蓋章：尖沙咀鐘樓" onPointerDown="{{down}}" onPointerUp="{{up}}" onPointerCancel="{{up}}" onLostPointerCapture="{{up}}" onKeyDown="{{keyDown}}" onKeyUp="{{keyUp}}" onContextMenu="{{noMenu}}" style="position: absolute; left: 16px; right: 16px; top: 196px; height: 360px; border-top: 1px solid #C1C1BE; border-bottom: 1px solid #C1C1BE">
+
+<div aria-hidden="true" style="position: absolute; left: 135px; top: 108px; width: 200px; height: 200px; opacity: 0.36; transform: rotate(14deg)"><svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true"><defs><filter id="inkE2o" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="11" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" result="d"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="16" result="n2"></feTurbulence><feColorMatrix in="n2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2 1.85" result="m"></feColorMatrix><feComposite in="d" in2="m" operator="in"></feComposite></filter><linearGradient id="pgE2o" gradientTransform="rotate(200 .5 .5)"><stop offset="0" stop-color="#fff"></stop><stop offset=".5" stop-color="#fff" stop-opacity=".95"></stop><stop offset="1" stop-color="#fff" stop-opacity=".55"></stop></linearGradient><mask id="pmE2o"><rect width="200" height="200" fill="url(#pgE2o)"></rect></mask><path id="taE2o" d="M32 100A68 68 0 0 1 168 100"></path><path id="baE2o" d="M24 100A76 76 0 0 0 176 100"></path><clipPath id="ccE2o"><circle cx="100" cy="100" r="62"></circle></clipPath></defs><g mask="url(#pmE2o)"><g filter="url(#inkE2o)">
+<g fill="none" stroke="#B9473A"><circle cx="100" cy="100" r="95" stroke-width="4.5"></circle><circle cx="100" cy="100" r="88" stroke-width="1"></circle><circle cx="100" cy="100" r="62" stroke-width="1.2"></circle><g clip-path="url(#ccE2o)"><path d="M30 117H170M30 141H170" stroke-width="1.2"></path></g><g transform="translate(72 50) scale(0.56)" stroke-width="3.93" stroke-linecap="round" stroke-linejoin="round"><path d="M50 3V11M44 24L50 11L56 24Z"></path><rect x="42" y="24" width="16" height="10"></rect><rect x="39" y="34" width="22" height="48"></rect><circle cx="50" cy="46" r="6.5"></circle><path d="M50 46V41.5M50 46L53.5 48"></path><path d="M43 60H57M43 66H57"></path><path d="M45 82V75A5 5 0 0 1 55 75V82"></path><path d="M61 82H90M68 82V75H83V82M14 82H39M22 82V77H33V82"></path><path d="M6 90Q12 86 18 90T30 90T42 90T54 90T66 90T78 90T90 90T96 90"></path><path d="M18 97Q24 93 30 97T42 97T54 97T66 97T78 97"></path></g></g>
+<g fill="#B9473A"><text font-family="Noto Serif TC, serif" font-weight="900" font-size="16" letter-spacing="7"><textPath href="#taE2o" startOffset="50%" text-anchor="middle">尖沙咀鐘樓</textPath></text><text font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="10" letter-spacing="3"><textPath href="#baE2o" startOffset="50%" text-anchor="middle">油尖旺 · 第 12 枚</textPath></text><text x="100" y="135" text-anchor="middle" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="15" letter-spacing="1.5" style="font-variant-numeric: tabular-nums">2026.03.08</text><circle cx="27" cy="100" r="2.2"></circle><circle cx="173" cy="100" r="2.2"></circle></g></g></g></svg></div>
+<div class="imprint" style="position: absolute; left: 79px; top: 54px; width: 200px; height: 200px; transform: rotate(-8deg)"><svg width="200" height="200" viewBox="0 0 200 200" aria-hidden="true"><defs><filter id="inkE2n" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="7" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" result="d"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="12" result="n2"></feTurbulence><feColorMatrix in="n2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2 1.85" result="m"></feColorMatrix><feComposite in="d" in2="m" operator="in"></feComposite></filter><linearGradient id="pgE2n" gradientTransform="rotate(35 .5 .5)"><stop offset="0" stop-color="#fff"></stop><stop offset=".5" stop-color="#fff" stop-opacity=".95"></stop><stop offset="1" stop-color="#fff" stop-opacity=".55"></stop></linearGradient><mask id="pmE2n"><rect width="200" height="200" fill="url(#pgE2n)"></rect></mask><path id="taE2n" d="M32 100A68 68 0 0 1 168 100"></path><path id="baE2n" d="M24 100A76 76 0 0 0 176 100"></path><clipPath id="ccE2n"><circle cx="100" cy="100" r="62"></circle></clipPath></defs><g mask="url(#pmE2n)"><g filter="url(#inkE2n)">
+<g fill="none" stroke="#B9473A"><circle cx="100" cy="100" r="95" stroke-width="4.5"></circle><circle cx="100" cy="100" r="88" stroke-width="1"></circle><circle cx="100" cy="100" r="62" stroke-width="1.2"></circle><g clip-path="url(#ccE2n)"><path d="M30 117H170M30 141H170" stroke-width="1.2"></path></g><g transform="translate(72 50) scale(0.56)" stroke-width="3.93" stroke-linecap="round" stroke-linejoin="round"><path d="M50 3V11M44 24L50 11L56 24Z"></path><rect x="42" y="24" width="16" height="10"></rect><rect x="39" y="34" width="22" height="48"></rect><circle cx="50" cy="46" r="6.5"></circle><path d="M50 46V41.5M50 46L53.5 48"></path><path d="M43 60H57M43 66H57"></path><path d="M45 82V75A5 5 0 0 1 55 75V82"></path><path d="M61 82H90M68 82V75H83V82M14 82H39M22 82V77H33V82"></path><path d="M6 90Q12 86 18 90T30 90T42 90T54 90T66 90T78 90T90 90T96 90"></path><path d="M18 97Q24 93 30 97T42 97T54 97T66 97T78 97"></path></g></g>
+<g fill="#B9473A"><text font-family="Noto Serif TC, serif" font-weight="900" font-size="16" letter-spacing="7"><textPath href="#taE2n" startOffset="50%" text-anchor="middle">尖沙咀鐘樓</textPath></text><text font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="10" letter-spacing="3"><textPath href="#baE2n" startOffset="50%" text-anchor="middle">油尖旺 · 第 23 枚</textPath></text><text x="100" y="135" text-anchor="middle" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="15" letter-spacing="1.5" style="font-variant-numeric: tabular-nums">2026.11.18</text><circle cx="27" cy="100" r="2.2"></circle><circle cx="173" cy="100" r="2.2"></circle></g></g></g></svg></div>
+<div class="shadow" aria-hidden="true" style="position: absolute; left: 79.25px; top: 179.5px; width: 199.5px; height: 30px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(30, 43, 60, 0.42), rgba(30, 43, 60, 0) 70%)"></div>
+<div class="tool" aria-hidden="true" style="position: absolute; left: 72px; top: -31.5px; width: 214px; height: 247px"><svg width="214" height="247" viewBox="0 0 214 247" aria-hidden="true"><ellipse cx="107" cy="206.5" rx="95" ry="28.5" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></ellipse><path d="M14 207.5A93 27.5 0 0 0 200 207.5" fill="none" stroke="#B9473A" stroke-width="2.6" stroke-linecap="round"></path><rect x="12" y="191.5" width="190" height="15" fill="#FBF8F0"></rect><path d="M12 191.5V206.5M202 191.5V206.5" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M17.75 201.59v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M22.72 206.02v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M29.98 210.15v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M39.33 213.85v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M50.52 217.02v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M63.24 219.58v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M77.15 221.46v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M91.87 222.61v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M107 223v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M122.13 222.61v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M136.85 221.46v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M150.76 219.58v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M163.48 217.02v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M174.67 213.85v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M184.02 210.15v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M191.28 206.02v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M196.25 201.59v9" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><ellipse cx="107" cy="191.5" rx="95" ry="28.5" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></ellipse><ellipse cx="107" cy="191.5" rx="86" ry="24.5" fill="none" stroke="#2D3E5C" stroke-width="0.7" opacity="0.5"></ellipse><path d="M92 191.5V129.5M122 191.5V129.5" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M92 129.5V191.5A15 5 0 0 0 122 191.5V129.5Z" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M113 137.5V189.5M117 137.5V188.5" stroke="#2D3E5C" stroke-width="0.7" opacity="0.5"></path><ellipse cx="107" cy="131.5" rx="24" ry="6" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></ellipse><path d="M77 107.5C75 71.5 139 71.5 137 107.5C133 127.5 81 127.5 77 107.5Z" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M121 87.5C129 95.5 130 107.5 125 115.5M127 92.5C133 99.5 133 107.5 130 112.5" fill="none" stroke="#2D3E5C" stroke-width="0.7" opacity="0.5"></path><path d="M95 89.5C99 85.5 105 84.5 110 85.5" fill="none" stroke="#2D3E5C" stroke-width="1" opacity="0.6" stroke-linecap="round"></path></svg></div>
+<sc-if value="{{showHint}}" hint-placeholder-val="{{ true }}">
+<span class="hint" aria-live="polite" style="position: absolute; left: 0; right: 0; bottom: 24px; text-align: center; font-size: 14px; color: #5C667A">{{hint}}</span>
+<span aria-hidden="true" style="position: absolute; left: 119px; width: 120px; bottom: 12px; height: 2px; border-radius: 1px; background: #C1C1BE; overflow: hidden"><span class="bar" style="display: block; height: 2px; background: #B9473A"></span></span>
+</sc-if>
+</div>
+
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="position: absolute; left: 24px; right: 24px; top: 574px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 14px"><span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 22px; white-space: nowrap">油尖旺 3 / 5</span><span style="font-size: 13px; color: #5C667A; white-space: nowrap">這一頁第 2 個章 · 上次 2026.03.08</span></div>
+<span style="font-size: 13px; color: #5C667A">每來一次就多一個章。集齊 5 個景點，油尖旺會變紅。</span>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: 20px; right: 20px; bottom: 36px; display: flex; flex-direction: column; gap: 10px; align-items: stretch">
+<sc-if value="{{notDone}}" hint-placeholder-val="{{ true }}">
+<span style="text-align: center; font-size: 12px; color: #5C667A">定位只在你按下去的那一刻讀一次</span>
+</sc-if>
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+<button type="button" style="height: 52px; border: 1.5px dashed #2D3E5C; border-radius: 14px; background: rgba(251, 248, 240, 0.8); color: #1E2B3C; font-family: inherit; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>拍一張照片，貼在印章旁邊</button>
+<div style="display: flex; gap: 10px">
+<button type="button" onClick="{{reset}}" style="flex: 1; height: 52px; border: 1.5px solid #2D3E5C; border-radius: 14px; background: transparent; color: #2D3E5C; font-family: inherit; font-size: 15px; cursor: pointer">再試一次（示範）</button>
+<a href="A-Home.dc.html" style="flex: 1; height: 52px; border-radius: 14px; background: #2D3E5C; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center">返回地圖</a>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { phase: 'idle' };
+this.timer = null;
+this.ph = 'idle';
+}
+componentWillUnmount() { clearTimeout(this.timer); }
+noise(dur, freq, gain) {
+try {
+var C = window.AudioContext || window.webkitAudioContext;
+if (!this.ctx) this.ctx = new C();
+var ctx = this.ctx;
+if (ctx.state === 'suspended') ctx.resume();
+var n = Math.floor(ctx.sampleRate * dur);
+var buf = ctx.createBuffer(1, n, ctx.sampleRate);
+var d = buf.getChannelData(0);
+for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+var src = ctx.createBufferSource();
+src.buffer = buf;
+var f = ctx.createBiquadFilter();
+f.type = 'lowpass';
+f.frequency.value = freq;
+var g = ctx.createGain();
+g.gain.value = gain;
+src.connect(f); f.connect(g); g.connect(ctx.destination);
+src.start();
+} catch (e) {}
+}
+buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+go(ph) { this.ph = ph; this.setState({ phase: ph }); }
+start() {
+if (this.ph !== 'idle') return;
+this.noise(0.03, 700, 0.18);
+this.go('press');
+clearTimeout(this.timer);
+this.timer = setTimeout(() => { this.go('full'); this.noise(0.022, 3400, 0.28); this.buzz(12); }, 900);
+}
+finish() {
+var p = this.ph;
+clearTimeout(this.timer);
+if (p === 'full') { this.go('done'); this.noise(0.22, 400, 0.95); this.buzz(40); }
+else if (p === 'press') { this.go('idle'); }
+}
+renderVals() {
+var p = this.state.phase;
+var hints = { idle: '按住印章，壓到底再放手', press: '繼續按住……', full: '放手！', done: '' };
+return {
+phase: p,
+done: p === 'done',
+notDone: p !== 'done',
+showHint: p !== 'done',
+hint: hints[p],
+down: (e) => { try { if (e && e.currentTarget && e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} this.start(); },
+up: () => this.finish(),
+keyDown: (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) this.start(); } },
+keyUp: (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.finish(); } },
+noMenu: (e) => e.preventDefault(),
+reset: () => this.go('idle')
+};
+}
+}
+</script>
+</body>
+</html>

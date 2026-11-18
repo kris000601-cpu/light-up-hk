@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<title>方案 A · 遊歷護照 · 蓋章</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;family=Noto+Serif+TC:wght@700;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2D3E5C}a:hover{color:#1E2B3C}
+@keyframes slam{0%{opacity:0;transform:scale(1.9) rotate(-15deg)}55%{opacity:1;transform:scale(.95) rotate(-6deg)}75%{transform:scale(1.02) rotate(-6deg)}100%{opacity:1;transform:scale(1) rotate(-6deg)}}
+@keyframes dry{from{opacity:1}to{opacity:.9}}
+@keyframes thud{0%,100%{transform:translateY(0)}35%{transform:translateY(3px)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slam{animation:slam .42s cubic-bezier(.2,.9,.3,1.15) both}
+.dry{animation:dry 1.4s .5s ease-out both}
+.thud{animation:thud .26s .22s ease-out}
+.rise{animation:rise .5s .75s ease both}
+@media (prefers-reduced-motion: reduce){.slam,.dry,.thud,.rise{animation:none}.slam{transform:rotate(-6deg)}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Noto Sans TC', 'PingFang HK', sans-serif; color: #1E2B3C; background: #F3EDDF">
+<img src="/_blob/b9a55d4f8c2cc0e6b01877e2eda54444" alt="" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+
+<div style="position: absolute; left: 8px; right: 20px; top: 44px; display: flex; align-items: center; justify-content: space-between">
+<a href="A-Home.dc.html" aria-label="返回首頁" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E2B3C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="font-size: 11px; letter-spacing: 5px; color: #2D3E5C">遊歷護照 · 第 3 頁</span>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; top: 104px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 13px; color: #5C667A">你已到達</span>
+<h1 style="margin: 0; font-family: 'Noto Serif TC', 'PMingLiU', serif; font-weight: 900; font-size: 30px; letter-spacing: 3px">羅屋民俗館</h1>
+<span style="font-size: 13px; color: #5C667A">柴灣 · 東區 · 距離 18 米</span>
+</div>
+
+<div class="{{stageClass}}" style="position: absolute; left: 16px; right: 16px; top: 214px; height: 330px; border-top: 1px solid #C1C1BE; border-bottom: 1px solid #C1C1BE">
+<svg aria-hidden="true" width="110" height="110" viewBox="0 0 110 110" style="position: absolute; left: 6px; top: 14px; opacity: 0.32; transform: rotate(12deg)"><g fill="none" stroke="#2D3E5C" stroke-width="2"><circle cx="55" cy="55" r="50"></circle><circle cx="55" cy="55" r="40" stroke-width="1"></circle></g><text x="55" y="58" text-anchor="middle" font-family="Noto Serif TC, serif" font-weight="900" font-size="22" fill="#2D3E5C">北角</text><text x="55" y="80" text-anchor="middle" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="10" fill="#2D3E5C">2026.03.08</text></svg>
+<svg aria-hidden="true" width="128" height="80" viewBox="0 0 128 80" style="position: absolute; right: 4px; bottom: 16px; opacity: 0.3; transform: rotate(-9deg)"><rect x="3" y="3" width="122" height="74" rx="6" fill="none" stroke="#2D3E5C" stroke-width="2.5"></rect><text x="64" y="40" text-anchor="middle" font-family="Noto Serif TC, serif" font-weight="900" font-size="22" fill="#2D3E5C">鰂魚涌</text><text x="64" y="62" text-anchor="middle" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="10" fill="#2D3E5C">2025.10.02</text></svg>
+
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 50%; top: 50%; width: 250px; height: 170px; margin: -85px 0 0 -125px; box-sizing: border-box; border: 1.5px dashed #8C93A0; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #5C667A; font-size: 13px">印章會蓋在這裏</div>
+</sc-if>
+<sc-if value="{{stamped}}" hint-placeholder-val="{{ false }}">
+<div class="slam" role="img" aria-label="印章：已抵達東區柴灣，羅屋民俗館，2026 年 11 月 17 日" style="position: absolute; left: 50%; top: 50%; width: 250px; height: 170px; margin: -85px 0 0 -125px">
+<svg class="dry" width="250" height="170" viewBox="0 0 250 170" aria-hidden="true">
+<defs><filter id="inkA" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" seed="7" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4" result="d"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="3" result="n2"></feTurbulence><feColorMatrix in="n2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.3 1.75" result="m"></feColorMatrix><feComposite in="d" in2="m" operator="in"></feComposite></filter></defs>
+<g filter="url(#inkA)">
+<g fill="none" stroke="#B9473A"><rect x="5" y="5" width="240" height="160" rx="14" stroke-width="5"></rect><rect x="14" y="14" width="222" height="142" rx="9" stroke-width="1.6"></rect><path d="M14 48H236M14 124H236" stroke-width="1.6"></path></g>
+<g fill="#B9473A" text-anchor="middle"><text x="125" y="37" font-family="Noto Serif TC, serif" font-weight="900" font-size="15" letter-spacing="6">已抵達 · 東區</text><text x="125" y="96" font-family="Noto Serif TC, serif" font-weight="900" font-size="44" letter-spacing="4">柴灣</text><text x="125" y="116" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="12" letter-spacing="3">羅屋民俗館</text><text x="125" y="148" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="17" letter-spacing="2">2026.11.17</text></g>
+</g>
+</svg>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{stamped}}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="position: absolute; left: 24px; right: 24px; top: 560px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 16px"><span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 22px">東區 3 / 5</span><span style="font-size: 14px; color: #5C667A">我的第 22 枚印章</span></div>
+<span style="font-size: 13px; color: #5C667A">再蓋 2 個景點，東區就會集齊變成金色。</span>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: 20px; right: 20px; bottom: 36px; display: flex; flex-direction: column; gap: 10px; align-items: stretch">
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{stamp}}" style="height: 58px; border: 0; border-radius: 14px; background: #B9473A; color: #FFFFFF; font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 20px; letter-spacing: 6px; cursor: pointer; box-shadow: inset 0 0 0 3px #B9473A, inset 0 0 0 4.5px #F0C2B9">蓋章</button>
+<span style="text-align: center; font-size: 12px; color: #5C667A">定位只在你按下去的那一刻讀一次</span>
+</sc-if>
+<sc-if value="{{stamped}}" hint-placeholder-val="{{ false }}">
+<button type="button" style="height: 52px; border: 1.5px dashed #2D3E5C; border-radius: 14px; background: rgba(251, 248, 240, 0.8); color: #1E2B3C; font-family: inherit; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>拍一張照片，貼在印章旁邊</button>
+<div style="display: flex; gap: 10px">
+<button type="button" onClick="{{reset}}" style="flex: 1; height: 52px; border: 1.5px solid #2D3E5C; border-radius: 14px; background: transparent; color: #2D3E5C; font-family: inherit; font-size: 15px; cursor: pointer">再蓋一次（示範）</button>
+<a href="A-Home.dc.html" style="flex: 1; height: 52px; border-radius: 14px; background: #2D3E5C; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center">完成</a>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { stamped: false };
+}
+thunk() {
+try {
+var C = window.AudioContext || window.webkitAudioContext;
+var ctx = new C();
+var n = Math.floor(ctx.sampleRate * 0.2);
+var buf = ctx.createBuffer(1, n, ctx.sampleRate);
+var d = buf.getChannelData(0);
+for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+var src = ctx.createBufferSource();
+src.buffer = buf;
+var f = ctx.createBiquadFilter();
+f.type = 'lowpass';
+f.frequency.value = 420;
+var g = ctx.createGain();
+g.gain.value = 0.9;
+src.connect(f); f.connect(g); g.connect(ctx.destination);
+src.start();
+} catch (e) {}
+}
+renderVals() {
+var s = this.state.stamped;
+return {
+ready: !s,
+stamped: s,
+stageClass: s ? 'thud' : '',
+stamp: () => { this.setState({ stamped: true }); setTimeout(() => this.thunk(), 230); },
+reset: () => this.setState({ stamped: false })
+};
+}
+}
+</script>
+</body>
+</html>

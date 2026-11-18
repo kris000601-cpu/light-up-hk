@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<title>方案 A · 入境章 版一 · 長方入境章</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&amp;family=Noto+Serif+TC:wght@700;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2D3E5C}a:hover{color:#1E2B3C}
+.stage{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer;outline:none}
+.stage:focus-visible{box-shadow:inset 0 0 0 2px #2D3E5C}
+.stage.done{cursor:default;animation:thud .28s ease-out}
+@keyframes thud{0%,100%{transform:none}30%{transform:translateY(3px)}}
+@keyframes wet{from{opacity:1;filter:saturate(1.3) brightness(.9)}to{opacity:.95;filter:none}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rise{animation:rise .5s .45s ease both}
+.full .hint{color:#B9473A;font-weight:700}
+
+.tool{transform:translateY(-44px);transition:transform .25s ease-out}
+.idle .tool{animation:float 2.6s ease-in-out infinite alternate}
+@keyframes float{from{transform:translateY(-44px)}to{transform:translateY(-50px)}}
+.press .tool{transform:none;transition:transform 900ms cubic-bezier(.4,0,.5,1)}
+.full .tool{animation:quiver .1s linear infinite alternate}
+.done .tool{animation:lift .55s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes quiver{from{transform:translateY(1px) rotate(-.35deg)}to{transform:translateY(1px) rotate(.35deg)}}
+@keyframes lift{from{transform:translateY(1px);opacity:1}to{transform:translateY(-150px);opacity:0}}
+.shadow{opacity:.14;transform:scale(1.1);transition:opacity .25s,transform .25s}
+.press .shadow,.full .shadow{opacity:.85;transform:scale(.92);transition:opacity 900ms,transform 900ms}
+.done .shadow{opacity:0;transition:opacity .3s}
+.imprint{opacity:0}
+.done .imprint{animation:wet 1.6s ease-out both}
+.bar{transform:scaleX(0);transform-origin:left;transition:transform .2s}
+.press .bar,.full .bar{transform:none;transition:transform 900ms linear}
+@media (prefers-reduced-motion: reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Noto Sans TC', 'PingFang HK', sans-serif; color: #1E2B3C; background: #F3EDDF">
+<img src="/_blob/b9a55d4f8c2cc0e6b01877e2eda54444" alt="" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+
+<div style="position: absolute; left: 8px; right: 20px; top: 44px; display: flex; align-items: center; justify-content: space-between">
+<a href="A-Home.dc.html" aria-label="返回地圖" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E2B3C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="font-size: 11px; letter-spacing: 5px; color: #2D3E5C">遊歷護照 · 第 12 頁</span>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; top: 100px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 13px; color: #5C667A">你已到達</span>
+<h1 style="margin: 0; font-family: 'Noto Serif TC', 'PMingLiU', serif; font-weight: 900; font-size: 27px; letter-spacing: 2px">尖沙咀鐘樓 · 星光大道</h1>
+<span style="font-size: 13px; color: #5C667A">尖沙咀 · 油尖旺 · 距離 24 米 · 第 2 次來</span>
+</div>
+
+<div class="stage {{phase}}" role="button" tabIndex="0" aria-label="按住蓋章：尖沙咀鐘樓" onPointerDown="{{down}}" onPointerUp="{{up}}" onPointerCancel="{{up}}" onLostPointerCapture="{{up}}" onKeyDown="{{keyDown}}" onKeyUp="{{keyUp}}" onContextMenu="{{noMenu}}" style="position: absolute; left: 16px; right: 16px; top: 196px; height: 360px; border-top: 1px solid #C1C1BE; border-bottom: 1px solid #C1C1BE">
+
+<div aria-hidden="true" style="position: absolute; left: 91px; top: 155px; width: 244px; height: 150px; opacity: 0.36; transform: rotate(7deg)"><svg width="244" height="150" viewBox="0 0 244 150" aria-hidden="true"><defs><filter id="inkE1o" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="11" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" result="d"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="16" result="n2"></feTurbulence><feColorMatrix in="n2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2 1.85" result="m"></feColorMatrix><feComposite in="d" in2="m" operator="in"></feComposite></filter><linearGradient id="pgE1o" gradientTransform="rotate(200 .5 .5)"><stop offset="0" stop-color="#fff"></stop><stop offset=".5" stop-color="#fff" stop-opacity=".95"></stop><stop offset="1" stop-color="#fff" stop-opacity=".55"></stop></linearGradient><mask id="pmE1o"><rect width="244" height="150" fill="url(#pgE1o)"></rect></mask></defs><g mask="url(#pmE1o)"><g filter="url(#inkE1o)">
+<g fill="none" stroke="#B9473A"><rect x="3" y="3" width="238" height="144" rx="11" stroke-width="4"></rect><rect x="10" y="10" width="224" height="130" rx="6" stroke-width="1.1"></rect><path d="M102 20V130" stroke-width="1.1"></path><path d="M112 45H224" stroke-width="0.9"></path><path d="M112 113H224" stroke-width="0.9"></path><path d="M205 30H221M216 25L221 30L216 35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><g transform="translate(19 20) scale(0.8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 3V11M44 24L50 11L56 24Z"></path><rect x="42" y="24" width="16" height="10"></rect><rect x="39" y="34" width="22" height="48"></rect><circle cx="50" cy="46" r="6.5"></circle><path d="M50 46V41.5M50 46L53.5 48"></path><path d="M43 60H57M43 66H57"></path><path d="M45 82V75A5 5 0 0 1 55 75V82"></path><path d="M61 82H90M68 82V75H83V82M14 82H39M22 82V77H33V82"></path><path d="M6 90Q12 86 18 90T30 90T42 90T54 90T66 90T78 90T90 90T96 90"></path><path d="M18 97Q24 93 30 97T42 97T54 97T66 97T78 97"></path></g></g>
+<g fill="#B9473A"><text x="56" y="126" text-anchor="middle" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="10.5" letter-spacing="3">油尖旺</text><text x="113" y="35" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="11" letter-spacing="5">已抵達</text><text x="112" y="74" font-family="Noto Serif TC, serif" font-weight="900" font-size="21.5" letter-spacing="0.5">尖沙咀鐘樓</text><text x="112" y="102" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="20" letter-spacing="1.2" style="font-variant-numeric: tabular-nums">2026.03.08</text><text x="113" y="129" font-family="Noto Sans TC, sans-serif" font-weight="500" font-size="9.5" letter-spacing="1.5">護照 0008 · 第 12 枚</text></g></g></g></svg></div>
+<div class="imprint" style="position: absolute; left: 57px; top: 79px; width: 244px; height: 150px; transform: rotate(-4deg)"><svg width="244" height="150" viewBox="0 0 244 150" aria-hidden="true"><defs><filter id="inkE1n" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="7" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" result="d"></feDisplacementMap><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="12" result="n2"></feTurbulence><feColorMatrix in="n2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2 1.85" result="m"></feColorMatrix><feComposite in="d" in2="m" operator="in"></feComposite></filter><linearGradient id="pgE1n" gradientTransform="rotate(35 .5 .5)"><stop offset="0" stop-color="#fff"></stop><stop offset=".5" stop-color="#fff" stop-opacity=".95"></stop><stop offset="1" stop-color="#fff" stop-opacity=".55"></stop></linearGradient><mask id="pmE1n"><rect width="244" height="150" fill="url(#pgE1n)"></rect></mask></defs><g mask="url(#pmE1n)"><g filter="url(#inkE1n)">
+<g fill="none" stroke="#B9473A"><rect x="3" y="3" width="238" height="144" rx="11" stroke-width="4"></rect><rect x="10" y="10" width="224" height="130" rx="6" stroke-width="1.1"></rect><path d="M102 20V130" stroke-width="1.1"></path><path d="M112 45H224" stroke-width="0.9"></path><path d="M112 113H224" stroke-width="0.9"></path><path d="M205 30H221M216 25L221 30L216 35" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path><g transform="translate(19 20) scale(0.8)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M50 3V11M44 24L50 11L56 24Z"></path><rect x="42" y="24" width="16" height="10"></rect><rect x="39" y="34" width="22" height="48"></rect><circle cx="50" cy="46" r="6.5"></circle><path d="M50 46V41.5M50 46L53.5 48"></path><path d="M43 60H57M43 66H57"></path><path d="M45 82V75A5 5 0 0 1 55 75V82"></path><path d="M61 82H90M68 82V75H83V82M14 82H39M22 82V77H33V82"></path><path d="M6 90Q12 86 18 90T30 90T42 90T54 90T66 90T78 90T90 90T96 90"></path><path d="M18 97Q24 93 30 97T42 97T54 97T66 97T78 97"></path></g></g>
+<g fill="#B9473A"><text x="56" y="126" text-anchor="middle" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="10.5" letter-spacing="3">油尖旺</text><text x="113" y="35" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="11" letter-spacing="5">已抵達</text><text x="112" y="74" font-family="Noto Serif TC, serif" font-weight="900" font-size="21.5" letter-spacing="0.5">尖沙咀鐘樓</text><text x="112" y="102" font-family="Noto Sans TC, sans-serif" font-weight="700" font-size="20" letter-spacing="1.2" style="font-variant-numeric: tabular-nums">2026.11.18</text><text x="113" y="129" font-family="Noto Sans TC, sans-serif" font-weight="500" font-size="9.5" letter-spacing="1.5">護照 0008 · 第 23 枚</text></g></g></g></svg></div>
+<div class="shadow" aria-hidden="true" style="position: absolute; left: 60.349999999999994px; top: 185px; width: 237.3px; height: 30px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(30, 43, 60, 0.42), rgba(30, 43, 60, 0) 70%)"></div>
+<div class="tool" aria-hidden="true" style="position: absolute; left: 54px; top: -37px; width: 250px; height: 258px"><svg width="250" height="258" viewBox="0 0 250 258" aria-hidden="true"><rect x="12" y="197" width="226" height="49" rx="8" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></rect><path d="M20 244.4H230" stroke="#B9473A" stroke-width="2.6" stroke-linecap="round"></path><path d="M22 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M29 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M36 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M43 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M50 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M57 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M64 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M71 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M78 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M85 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M92 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M99 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M106 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M113 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M120 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M127 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M134 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M141 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M148 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M155 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M162 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M169 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M176 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M183 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M190 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M197 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M204 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M211 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M218 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M225 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M232 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><path d="M239 234v8" stroke="#2D3E5C" stroke-width="0.6" opacity="0.45"></path><rect x="12" y="163" width="226" height="68" rx="8" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></rect><rect x="19" y="167" width="212" height="60" rx="5" fill="none" stroke="#2D3E5C" stroke-width="0.7" opacity="0.5"></rect><path d="M110 197V135M140 197V135" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M110 135V197A15 5 0 0 0 140 197V135Z" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M131 143V195M135 143V194" stroke="#2D3E5C" stroke-width="0.7" opacity="0.5"></path><ellipse cx="125" cy="137" rx="24" ry="6" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></ellipse><path d="M95 113C93 77 157 77 155 113C151 133 99 133 95 113Z" fill="#FBF8F0" stroke="#2D3E5C" stroke-width="1.6" stroke-linejoin="round"></path><path d="M139 93C147 101 148 113 143 121M145 98C151 105 151 113 148 118" fill="none" stroke="#2D3E5C" stroke-width="0.7" opacity="0.5"></path><path d="M113 95C117 91 123 90 128 91" fill="none" stroke="#2D3E5C" stroke-width="1" opacity="0.6" stroke-linecap="round"></path></svg></div>
+<sc-if value="{{showHint}}" hint-placeholder-val="{{ true }}">
+<span class="hint" aria-live="polite" style="position: absolute; left: 0; right: 0; bottom: 24px; text-align: center; font-size: 14px; color: #5C667A">{{hint}}</span>
+<span aria-hidden="true" style="position: absolute; left: 119px; width: 120px; bottom: 12px; height: 2px; border-radius: 1px; background: #C1C1BE; overflow: hidden"><span class="bar" style="display: block; height: 2px; background: #B9473A"></span></span>
+</sc-if>
+</div>
+
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="position: absolute; left: 24px; right: 24px; top: 574px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 14px"><span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 22px; white-space: nowrap">油尖旺 3 / 5</span><span style="font-size: 13px; color: #5C667A; white-space: nowrap">這一頁第 2 個章 · 上次 2026.03.08</span></div>
+<span style="font-size: 13px; color: #5C667A">每來一次就多一個章。集齊 5 個景點，油尖旺會變紅。</span>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: 20px; right: 20px; bottom: 36px; display: flex; flex-direction: column; gap: 10px; align-items: stretch">
+<sc-if value="{{notDone}}" hint-placeholder-val="{{ true }}">
+<span style="text-align: center; font-size: 12px; color: #5C667A">定位只在你按下去的那一刻讀一次</span>
+</sc-if>
+<sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+<button type="button" style="height: 52px; border: 1.5px dashed #2D3E5C; border-radius: 14px; background: rgba(251, 248, 240, 0.8); color: #1E2B3C; font-family: inherit; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>拍一張照片，貼在印章旁邊</button>
+<div style="display: flex; gap: 10px">
+<button type="button" onClick="{{reset}}" style="flex: 1; height: 52px; border: 1.5px solid #2D3E5C; border-radius: 14px; background: transparent; color: #2D3E5C; font-family: inherit; font-size: 15px; cursor: pointer">再試一次（示範）</button>
+<a href="A-Home.dc.html" style="flex: 1; height: 52px; border-radius: 14px; background: #2D3E5C; color: #FFFFFF; font-size: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center">返回地圖</a>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { phase: 'idle' };
+this.timer = null;
+this.ph = 'idle';
+}
+componentWillUnmount() { clearTimeout(this.timer); }
+noise(dur, freq, gain) {
+try {
+var C = window.AudioContext || window.webkitAudioContext;
+if (!this.ctx) this.ctx = new C();
+var ctx = this.ctx;
+if (ctx.state === 'suspended') ctx.resume();
+var n = Math.floor(ctx.sampleRate * dur);
+var buf = ctx.createBuffer(1, n, ctx.sampleRate);
+var d = buf.getChannelData(0);
+for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+var src = ctx.createBufferSource();
+src.buffer = buf;
+var f = ctx.createBiquadFilter();
+f.type = 'lowpass';
+f.frequency.value = freq;
+var g = ctx.createGain();
+g.gain.value = gain;
+src.connect(f); f.connect(g); g.connect(ctx.destination);
+src.start();
+} catch (e) {}
+}
+buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+go(ph) { this.ph = ph; this.setState({ phase: ph }); }
+start() {
+if (this.ph !== 'idle') return;
+this.noise(0.03, 700, 0.18);
+this.go('press');
+clearTimeout(this.timer);
+this.timer = setTimeout(() => { this.go('full'); this.noise(0.022, 3400, 0.28); this.buzz(12); }, 900);
+}
+finish() {
+var p = this.ph;
+clearTimeout(this.timer);
+if (p === 'full') { this.go('done'); this.noise(0.22, 400, 0.95); this.buzz(40); }
+else if (p === 'press') { this.go('idle'); }
+}
+renderVals() {
+var p = this.state.phase;
+var hints = { idle: '按住印章，壓到底再放手', press: '繼續按住……', full: '放手！', done: '' };
+return {
+phase: p,
+done: p === 'done',
+notDone: p !== 'done',
+showHint: p !== 'done',
+hint: hints[p],
+down: (e) => { try { if (e && e.currentTarget && e.currentTarget.setPointerCapture) e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {} this.start(); },
+up: () => this.finish(),
+keyDown: (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!e.repeat) this.start(); } },
+keyUp: (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); this.finish(); } },
+noMenu: (e) => e.preventDefault(),
+reset: () => this.go('idle')
+};
+}
+}
+</script>
+</body>
+</html>

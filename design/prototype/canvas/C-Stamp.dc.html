@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<title>方案 C · 套色印刷 · 蓋章</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&amp;family=Noto+Serif+TC:wght@700;900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F4C86}a:hover{color:#213A6B}
+@keyframes printB{0%{opacity:0;transform:scale(1.25) rotate(-10deg)}60%{opacity:1;transform:scale(.97) rotate(-4deg)}100%{opacity:1;transform:scale(1) rotate(-4deg)}}
+@keyframes printR{0%{opacity:0;transform:translate(10px,-8px) scale(1.25) rotate(-10deg)}60%{opacity:1;transform:translate(2px,-1.5px) scale(.97) rotate(-4deg)}100%{opacity:1;transform:translate(2px,-1.5px) scale(1) rotate(-4deg)}}
+@keyframes thud{0%,100%{transform:translateY(0)}35%{transform:translateY(3px)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.printB{animation:printB .4s cubic-bezier(.2,.9,.3,1.1) both}
+.printR{animation:printR .4s .18s cubic-bezier(.2,.9,.3,1.1) both}
+.thud{animation:thud .26s .2s ease-out}
+.rise{animation:rise .5s .8s ease both}
+@media (prefers-reduced-motion: reduce){.printB,.printR,.thud,.rise{animation:none}.printB{transform:rotate(-4deg)}.printR{transform:translate(2px,-1.5px) rotate(-4deg)}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Noto Sans TC', 'PingFang HK', sans-serif; color: #2F4C86; background: #F4EEE2">
+<img src="/_blob/2fc9e2f0d55f6a56d5c5f6678ef2d2e8" alt="" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+
+<div style="position: absolute; left: 8px; right: 20px; top: 44px; display: flex; align-items: center; justify-content: space-between">
+<a href="C-Home.dc.html" aria-label="返回首頁" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F4C86" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a>
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 3px">從柴灣寄出 · 11 月 17 日</span>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; top: 104px; display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Noto Serif TC', 'PMingLiU', serif; font-weight: 900; font-size: 30px; letter-spacing: 3px; text-shadow: 1.5px 1px 0 rgba(224, 83, 61, 0.7)">羅屋民俗館</h1>
+<span style="font-size: 13px; font-weight: 500">柴灣 · 東區 · 兩百多年的客家村屋</span>
+</div>
+
+<div class="{{stageClass}}" style="position: absolute; left: 16px; right: 16px; top: 194px; height: 330px; background: #FBF7EE; border: 1.5px solid rgba(47, 76, 134, 0.35); overflow: hidden">
+<div aria-hidden="true" style="position: absolute; left: 179px; top: 150px; bottom: 20px; width: 1.5px; background: rgba(47, 76, 134, 0.3)"></div>
+<div aria-hidden="true" style="position: absolute; left: 196px; right: 18px; top: 210px; display: flex; flex-direction: column; gap: 26px"><span style="height: 1.5px; background: rgba(47, 76, 134, 0.3)"></span><span style="height: 1.5px; background: rgba(47, 76, 134, 0.3)"></span><span style="height: 1.5px; background: rgba(47, 76, 134, 0.3)"></span></div>
+<button type="button" style="position: absolute; left: 16px; top: 172px; width: 146px; height: 132px; border: 2px dashed rgba(47, 76, 134, 0.55); background: transparent; color: #2F4C86; font-family: inherit; font-size: 13px; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>拍一張照片</button>
+<div aria-hidden="true" style="position: absolute; left: 264px; top: 18px; width: 72px; height: 88px; padding: 5px; box-sizing: border-box; background: radial-gradient(circle at 4px 4px, transparent 2.6px, #FBF7EE 3px) -4px -4px / 8px 8px, #FBF7EE">
+<div style="width: 100%; height: 100%; background: #F2C14E; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px"><span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 30px; color: #E0533D; line-height: 1">東</span><span style="font-size: 10px; font-weight: 900; color: #2F4C86">3 / 5</span></div>
+</div>
+<span aria-hidden="true" style="position: absolute; left: 16px; top: 16px; font-size: 11px; font-weight: 900; letter-spacing: 4px; opacity: 0.6">明信片</span>
+
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 132px; top: 16px; width: 176px; height: 176px; box-sizing: border-box; border: 2px dashed rgba(224, 83, 61, 0.7); border-radius: 88px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #E0533D">印章會蓋在這裏</div>
+</sc-if>
+<sc-if value="{{stamped}}" hint-placeholder-val="{{ false }}">
+<div role="img" aria-label="郵戳：羅屋民俗館，東區，柴灣，2026 年 11 月 17 日，第 22 枚" style="position: absolute; left: 120px; top: 4px; width: 300px; height: 200px">
+<svg class="printB" width="300" height="200" viewBox="0 0 300 200" aria-hidden="true" style="position: absolute; left: 0; top: 0; mix-blend-mode: multiply; transform-origin: 100px 100px">
+<defs>
+<filter id="grainC" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="12" result="n"></feTurbulence><feColorMatrix in="n" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.9 1.6" result="m"></feColorMatrix><feComposite in="SourceGraphic" in2="m" operator="in"></feComposite></filter>
+<path id="arcTopC" d="M42 100A58 58 0 0 1 158 100"></path>
+<path id="arcBotC" d="M30 100A70 70 0 0 0 170 100"></path>
+</defs>
+<g filter="url(#grainC)" fill="#2F4C86">
+<circle cx="100" cy="100" r="88" fill="none" stroke="#2F4C86" stroke-width="4"></circle>
+<circle cx="100" cy="100" r="76" fill="none" stroke="#2F4C86" stroke-width="1.2"></circle>
+<text font-weight="900" font-size="13" letter-spacing="4" font-family="Noto Sans TC, sans-serif"><textPath href="#arcTopC" startOffset="50%" text-anchor="middle">羅屋民俗館 · 東區</textPath></text>
+<text font-weight="700" font-size="11" letter-spacing="3" font-family="Noto Sans TC, sans-serif"><textPath href="#arcBotC" startOffset="50%" text-anchor="middle">第 22 枚</textPath></text>
+<path d="M196 66q12-8 24 0t24 0t24 0t24 0M196 88q12-8 24 0t24 0t24 0t24 0M196 110q12-8 24 0t24 0t24 0t24 0M196 132q12-8 24 0t24 0t24 0t24 0" fill="none" stroke="#2F4C86" stroke-width="3.2"></path>
+</g>
+</svg>
+<svg class="printR" width="300" height="200" viewBox="0 0 300 200" aria-hidden="true" style="position: absolute; left: 0; top: 0; mix-blend-mode: multiply; transform-origin: 100px 100px">
+<defs><filter id="grainR" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="21" result="n"></feTurbulence><feColorMatrix in="n" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.9 1.6" result="m"></feColorMatrix><feComposite in="SourceGraphic" in2="m" operator="in"></feComposite></filter></defs>
+<g filter="url(#grainR)" fill="#E0533D" text-anchor="middle">
+<text x="100" y="108" font-family="Noto Serif TC, serif" font-weight="900" font-size="40" letter-spacing="4">柴灣</text>
+<text x="100" y="134" font-family="Noto Sans TC, sans-serif" font-weight="900" font-size="14" letter-spacing="1.5">2026.11.17</text>
+<path d="M58 72H142" stroke="#E0533D" stroke-width="2"></path>
+</g>
+</svg>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{stamped}}" hint-placeholder-val="{{ false }}">
+<div class="rise" style="position: absolute; left: 24px; right: 24px; top: 540px; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: baseline; gap: 16px"><span style="font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 22px; color: #E0533D">東區 3 / 5</span><span style="font-size: 14px; font-weight: 700">我的第 22 枚印章</span></div>
+<span style="font-size: 13px; font-weight: 500">再蓋 2 個景點，東區就會印成實心紅色。</span>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: 20px; right: 20px; bottom: 36px; display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{ready}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{stamp}}" style="height: 60px; border: 0; background: #E0533D; color: #F4EEE2; font-family: inherit; font-weight: 900; font-size: 20px; letter-spacing: 6px; cursor: pointer; box-shadow: 4px 4px 0 rgba(47, 76, 134, 0.85)">蓋章</button>
+<span style="text-align: center; font-size: 12px; font-weight: 500">定位只在你按下去的那一刻讀一次</span>
+</sc-if>
+<sc-if value="{{stamped}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 10px">
+<button type="button" onClick="{{reset}}" style="flex: 1; height: 52px; border: 2px solid #2F4C86; background: transparent; color: #2F4C86; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer">再蓋一次（示範）</button>
+<a href="C-Home.dc.html" style="flex: 1; height: 52px; background: #2F4C86; color: #F4EEE2; font-size: 15px; font-weight: 900; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 3px 3px 0 rgba(224, 83, 61, 0.8)">完成</a>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { stamped: false };
+}
+thunk(delay, freq) {
+setTimeout(function () {
+try {
+var C = window.AudioContext || window.webkitAudioContext;
+var ctx = new C();
+var n = Math.floor(ctx.sampleRate * 0.15);
+var buf = ctx.createBuffer(1, n, ctx.sampleRate);
+var d = buf.getChannelData(0);
+for (var i = 0; i < n; i++) { d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4); }
+var src = ctx.createBufferSource();
+src.buffer = buf;
+var f = ctx.createBiquadFilter();
+f.type = 'lowpass';
+f.frequency.value = freq;
+var g = ctx.createGain();
+g.gain.value = 0.8;
+src.connect(f); f.connect(g); g.connect(ctx.destination);
+src.start();
+} catch (e) {}
+}, delay);
+}
+renderVals() {
+var s = this.state.stamped;
+return {
+ready: !s,
+stamped: s,
+stageClass: s ? 'thud' : '',
+stamp: () => { this.setState({ stamped: true }); this.thunk(220, 500); this.thunk(400, 800); },
+reset: () => this.setState({ stamped: false })
+};
+}
+}
+</script>
+</body>
+</html>

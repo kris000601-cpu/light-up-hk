@@ -1,0 +1,171 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-17T16:30:00Z"
+  },
+  "title": "點亮香港 · 溫暖手作三個方案",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": -620,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "上一版 · 現代風推進原型",
+      "is_interactive": true
+    },
+    "A-Home.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "A · 首頁"
+    },
+    "A-Stamp.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "A · 蓋章（舊版：點一下）",
+      "is_interactive": true
+    },
+    "A-Region.dc.html": {
+      "x": 0,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "A · 按「九龍」彈出的列表"
+    },
+    "B-Home.dc.html": {
+      "x": 1100,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "B · 首頁"
+    },
+    "B-Stamp.dc.html": {
+      "x": 1570,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "B · 蓋章（可以按）",
+      "is_interactive": true
+    },
+    "C-Home.dc.html": {
+      "x": 2200,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "C · 首頁"
+    },
+    "C-Stamp.dc.html": {
+      "x": 2670,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "C · 蓋章（可以按）",
+      "is_interactive": true
+    },
+    "A-Stamp1.dc.html": {
+      "x": 470,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "A · 蓋章 版一：圓形入境章（按住試試）",
+      "is_interactive": true
+    },
+    "A-Stamp2.dc.html": {
+      "x": 940,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "A · 蓋章 版二：方形朱印（按住試試）",
+      "is_interactive": true
+    },
+    "A-Stamp3.dc.html": {
+      "x": 1410,
+      "y": 964,
+      "w": 390,
+      "h": 844,
+      "title": "A · 蓋章 版三：紀念郵戳（按住試試）",
+      "is_interactive": true
+    },
+    "A-Entry1.dc.html": {
+      "x": 470,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "A · 入境章 版一：長方（按住試試）",
+      "is_interactive": true
+    },
+    "A-Entry2.dc.html": {
+      "x": 940,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "A · 入境章 版二：圓形（按住試試）",
+      "is_interactive": true
+    },
+    "A-Entry3.dc.html": {
+      "x": 1410,
+      "y": 1928,
+      "w": 390,
+      "h": 844,
+      "title": "A · 入境章 版三：八角（按住試試）",
+      "is_interactive": true
+    },
+    "A-Emboss.dc.html": {
+      "x": 470,
+      "y": 2892,
+      "w": 390,
+      "h": 844,
+      "title": "A · 蓋章 乙：鋼印凸紋（按住試試）",
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "A-Home.dc.html",
+    "A-Stamp.dc.html",
+    "A-Region.dc.html",
+    "A-Stamp1.dc.html",
+    "A-Stamp2.dc.html",
+    "A-Stamp3.dc.html",
+    "B-Home.dc.html",
+    "B-Stamp.dc.html",
+    "C-Home.dc.html",
+    "C-Stamp.dc.html",
+    "A-Entry1.dc.html",
+    "A-Entry2.dc.html",
+    "A-Entry3.dc.html",
+    "A-Emboss.dc.html"
+  ],
+  "notes": {
+    "titleA": {
+      "x": 0,
+      "y": -300,
+      "text": "方案 A · 遊歷護照",
+      "kind": "title1",
+      "maxW": 860
+    },
+    "titleB": {
+      "x": 1100,
+      "y": -300,
+      "text": "方案 B · 手帳拼貼",
+      "kind": "title1",
+      "maxW": 860
+    },
+    "titleC": {
+      "x": 2200,
+      "y": -300,
+      "text": "方案 C · 套色印刷",
+      "kind": "title1",
+      "maxW": 860
+    }
+  },
+  "designSystems": []
+}
