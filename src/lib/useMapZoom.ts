@@ -15,6 +15,12 @@ const EDGE_PAD_PX = 36
 const SNAP_SCALE = 1.2
 /** 放手後回彈 / 縮回全圖的動畫長度（毫秒） */
 const SETTLE_MS = 320
+/** 慣性滑動：每毫秒保留的速度（接近 iPhone 的手感）；滑出邊界後摩擦大得多，很快停下再彈回 */
+const FRICTION = 0.9975
+const FRICTION_OUT = 0.97
+/** 放手時手指速度超過這個（像素 / 毫秒）才算「甩」；放手前停頓超過 FLING_PAUSE_MS 就不滑 */
+const FLING_MIN_SPEED = 0.1
+const FLING_PAUSE_MS = 60
 
 /** 橡皮筋：越拉越拉不動，最多拉出 dim 那麼遠（iOS 的做法） */
 const rubber = (d: number, dim: number) => dim * (1 - 1 / ((d * 0.55) / dim + 1))
@@ -149,7 +155,57 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     } | null = null
     let moved = false
 
+    // ---- 慣性滑動 ----
+    // 拖動時記下最後約 0.1 秒的手指位置，用來算放手那一刻的速度
+    let samples: { t: number; x: number; y: number }[] = []
+    // 拖動中未加橡皮筋的位置；慣性滑動從這裏接着算，免得一放手就跳
+    let panRaw: View | null = null
+    let flinging = false
+    const track = (x: number, y: number) => {
+      const t = performance.now()
+      samples.push({ t, x, y })
+      while (samples.length > 2 && t - samples[0].t > 100) samples.shift()
+    }
+    /** 放手時的手指速度（像素 / 毫秒）；放手前已經停住了就當作 0 */
+    const releaseVelocity = () => {
+      if (samples.length < 2) return null
+      const a = samples[0]
+      const b = samples[samples.length - 1]
+      if (performance.now() - b.t > FLING_PAUSE_MS || b.t - a.t < 10) return null
+      const vx = (b.x - a.x) / (b.t - a.t)
+      const vy = (b.y - a.y) / (b.t - a.t)
+      return Math.hypot(vx, vy) > FLING_MIN_SPEED ? { vx, vy } : null
+    }
+    /** 放手後按速度繼續滑，越滑越慢；滑出邊界時用橡皮筋頂一下，停下後彈回 */
+    const fling = (from: View, v: { vx: number; vy: number }) => {
+      const k = from.w / box.getBoundingClientRect().width // 每像素多少地圖單位
+      const raw = { ...from }
+      let vx = -v.vx * k
+      let vy = -v.vy * k
+      let last = performance.now()
+      flinging = true
+      const step = (now: number) => {
+        const dt = Math.min(32, now - last)
+        last = now
+        raw.x += vx * dt
+        raw.y += vy * dt
+        const b = bounds(raw.w, raw.h)
+        vx *= Math.pow(raw.x < b.x0 || raw.x > b.x1 ? FRICTION_OUT : FRICTION, dt)
+        vy *= Math.pow(raw.y < b.y0 || raw.y > b.y1 ? FRICTION_OUT : FRICTION, dt)
+        show(soften(raw))
+        if (Math.hypot(vx, vy) / k < 0.02) {
+          flinging = false
+          settle()
+          return
+        }
+        anim.current = requestAnimationFrame(step)
+      }
+      anim.current = requestAnimationFrame(step)
+    }
+
     const begin = (e: TouchEvent) => {
+      samples = []
+      panRaw = null
       const t = e.touches
       const v = viewRef.current
       if (t.length >= 2) {
@@ -170,9 +226,12 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     }
 
     const onTouchStart = (e: TouchEvent) => {
+      // 滑行中手指一碰就停；這一下只算「接住」，不會選到區
+      const caught = flinging
+      flinging = false
       cancelAnimationFrame(anim.current)
       if (e.touches.length === 1) {
-        moved = false
+        moved = caught
         suppressUntil.current = 0
       }
       begin(e)
@@ -199,15 +258,21 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
         const dy = t[0].clientY - start.sy!
         if (Math.hypot(dx, dy) > 6) moved = true
         const k = start.view.w / r.width
-        show(soften({ ...start.view, x: start.view.x - dx * k, y: start.view.y - dy * k }))
+        panRaw = { ...start.view, x: start.view.x - dx * k, y: start.view.y - dy * k }
+        show(soften(panRaw))
+        track(t[0].clientX, t[0].clientY)
       }
     }
 
     const onTouchEnd = (e: TouchEvent) => {
       if (moved) suppressUntil.current = performance.now() + 400
-      // 兩指變一指時，用剩下那隻手指接着拖；全部放開才回彈
+      const raw = panRaw
+      const v = e.touches.length === 0 && raw ? releaseVelocity() : null
+      // 兩指變一指時，用剩下那隻手指接着拖；全部放開才滑行 / 回彈
       begin(e)
-      if (e.touches.length === 0) settle()
+      if (e.touches.length > 0) return
+      if (raw && v) fling(raw, v)
+      else settle()
     }
 
     // ---- 電腦：觸控板捏合 / Ctrl + 滾輪縮放，放大後按住拖動 ----
@@ -228,10 +293,14 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     let drag: { view: View; sx: number; sy: number } | null = null
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0 || !zoomed()) return
+      const caught = flinging
+      flinging = false
       cancelAnimationFrame(anim.current)
       drag = { view: viewRef.current, sx: e.clientX, sy: e.clientY }
-      moved = false
+      moved = caught
       suppressUntil.current = 0
+      samples = []
+      panRaw = null
     }
     const onMouseMove = (e: MouseEvent) => {
       if (!drag) return
@@ -239,13 +308,18 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
       const dy = e.clientY - drag.sy
       if (Math.hypot(dx, dy) > 4) moved = true
       const k = drag.view.w / box.getBoundingClientRect().width
-      show(soften({ ...drag.view, x: drag.view.x - dx * k, y: drag.view.y - dy * k }))
+      panRaw = { ...drag.view, x: drag.view.x - dx * k, y: drag.view.y - dy * k }
+      show(soften(panRaw))
+      track(e.clientX, e.clientY)
     }
     const onMouseUp = () => {
       if (!drag) return
       if (moved) suppressUntil.current = performance.now() + 400
       drag = null
-      settle()
+      const raw = panRaw
+      const v = raw ? releaseVelocity() : null
+      if (raw && v) fling(raw, v)
+      else settle()
     }
 
     const onClickCapture = (e: MouseEvent) => {
@@ -278,7 +352,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
       clearTimeout(wheelTimer)
       cancelAnimationFrame(anim.current)
     }
-  }, [boxRef, show, soften, settle, mapW, mapH])
+  }, [boxRef, show, soften, settle, bounds, mapW, mapH])
 
   const scale = mapW / view.w
   return {
