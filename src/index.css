@@ -156,17 +156,18 @@ button {
   width: 100%;
   height: 100%;
   overflow: visible;
-  border-radius: 10px;
-  outline: 1px solid transparent;
-  outline-offset: -1px;
-  transition: outline-color 0.2s;
 }
 
-/* 放大後地圖框外的部分裁掉，並用細線圍出地圖框，讓人知道可以拖動 */
+/* 放大後：地圖框外的部分裁掉，不加框；四邊約 18px 內漸漸淡入紙色，沒有硬邊 */
 .hkmap.is-zoomed > svg {
   overflow: hidden;
-  outline-color: var(--hair);
   cursor: grab;
+  --fade-x: linear-gradient(to right, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  --fade-y: linear-gradient(to bottom, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  -webkit-mask-image: var(--fade-x), var(--fade-y);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--fade-x), var(--fade-y);
+  mask-composite: intersect;
 }
 
 .hkmap.is-zoomed > svg:active {
@@ -204,13 +205,19 @@ button {
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
+  transition: fill 0.2s, stroke 0.2s;
+}
+
+/* 聚焦：選中某區時，其他區暫時去掉進度顏色，只剩紙色和淡邊線（不用半透明，免得紅色變粉） */
+.hkmap-districts path.is-dimmed {
+  stroke: var(--hair);
 }
 
 .hkmap-selected {
   fill: none;
   stroke: var(--ink);
-  /* 一半在區外被裁掉，所以實際看到的是 3px，只在區內側 */
-  stroke-width: 6px;
+  /* 一半在區外被裁掉，所以實際看到的是 1.2px，只在區內側 */
+  stroke-width: 2.4px;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   pointer-events: none;

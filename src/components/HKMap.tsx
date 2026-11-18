@@ -36,7 +36,8 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
             <path
               key={d.code}
               d={d.d}
-              fill={FILL[d.level]}
+              className={selected && selected.code !== d.code ? 'is-dimmed' : undefined}
+              style={{ fill: selected && selected.code !== d.code ? 'var(--card)' : FILL[d.level] }}
               onClick={(e) => {
                 e.stopPropagation()
                 onSelect(selected?.code === d.code ? null : d)
