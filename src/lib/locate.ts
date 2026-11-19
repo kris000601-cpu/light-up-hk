@@ -17,7 +17,7 @@ export interface Fix {
 export type LocateError = 'denied' | 'unavailable' | 'timeout' | 'unsupported'
 
 /** 誤差超過這個就不給蓋章（請用戶再試） */
-export const ACC_LIMIT = 150
+export const ACC_LIMIT = 100
 /** 位置的有效期：超過就要再按一次「我在哪」 */
 export const FIX_TTL = 5 * 60 * 1000
 

@@ -6,7 +6,8 @@
 //           線（山徑、海濱長廊、河）→ 沿着整條線都算；面（公園、海灘、島）→ 範圍內都算。
 //           很長的山徑可以在後面加「@米數」，只取離景點座標這麼遠以內的一段，例如「relation/789@2500」。
 //           也可以直接寫座標「22.45,114.03」，當作多一個點。
-//   範圍米  再往外擴多少米。空白 = 點 300、線 / 面 200。
+//   範圍米  在地方本身的形狀外面再擴多少米。分三檔：市區建築 / 街道 50、海濱 / 大公園 / 海灘 80、郊野 / 山徑 / 離島 150。
+//           空白 = 50。手機的定位誤差另外補（最多 50 米，見 src/lib/range.ts）。
 //
 // 地物的形狀從 OpenStreetMap 下載，緩存在 tools/.cache/osm-shapes.json（不入庫）。
 // 用法：npm run spots
@@ -20,8 +21,8 @@ const CACHE = path.join(root, 'tools', '.cache', 'osm-shapes.json')
 fs.mkdirSync(path.dirname(CACHE), { recursive: true })
 const cache = fs.existsSync(CACHE) ? JSON.parse(fs.readFileSync(CACHE, 'utf8')) : {}
 
-const DEFAULT_POINT = 300
-const DEFAULT_SHAPE = 200
+const DEFAULT_POINT = 50
+const DEFAULT_SHAPE = 50
 
 const spots = readSpots()
 

@@ -3,7 +3,7 @@ import { SPOTS, label, useCountedStamps, useDistricts, type Spot } from '../lib/
 import { monthDay } from '../lib/format'
 import { platform } from '../lib/install'
 import { ACC_LIMIT, FIX_TTL, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
-import { nearestOnShape, navTarget } from '../lib/range'
+import { metresToRange, nearestOnShape, navTarget } from '../lib/range'
 import { addStamp, useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation, setFakeLocation, useFakeLocation } from '../lib/testMode'
 import { InstallSteps } from './InstallHint'
@@ -35,6 +35,15 @@ function deniedText() {
   if (p === 'ios' || (p === 'installed' && /iPhone|iPad/.test(navigator.userAgent)))
     return '沒有定位權限。請到 iPhone「設定」→「私隱與安全性」→「定位服務」，確認已開啟，並允許 Safari 網站使用位置，然後回來再按一次。'
   return '沒有定位權限。請按網址列左邊的圖示（或手機「設定」→「應用程式」→ 瀏覽器 →「權限」），允許使用「位置」，然後再按一次。'
+}
+
+/** 離可蓋章範圍不到這麼多米，就顯示「就快到了」 */
+const ALMOST = 100
+
+const navHref = (to: { lat: number; lng: number }) => `https://www.google.com/maps/dir/?api=1&destination=${to.lat.toFixed(5)},${to.lng.toFixed(5)}`
+const dist = (m: number) => {
+  const f = formatDistance(m)
+  return `${f.num} ${f.unit}`
 }
 
 const clock = (ms: number) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit', hour12: false }).format(ms)
@@ -99,19 +108,22 @@ export function WhereAmI() {
   const fix = status.k === 'done' ? status.fix : null
   const accurate = !!fix && fix.acc <= ACC_LIMIT
 
-  const { nearby, next } = useMemo(() => {
-    if (!fix) return { nearby: [] as Scored[], next: null as Scored | null }
-    const comp = Math.min(fix.acc, 100)
-    const all: Scored[] = SPOTS.map((spot) => {
-      const d = nearestOnShape(fix.lat, fix.lng, spot).d
-      return { spot, d, gap: d - spot.range.r - comp }
-    })
+  // 三種結果：到了（可以蓋）、就快到了（差不到 100 米）、下一站（最近的未蓋章景點）。
+  // 給用戶看的距離只有一種：到「那個地方本身」的距離（建築、公園、山徑），跟直覺一致。
+  const { nearby, almost, next } = useMemo(() => {
+    if (!fix) return { nearby: [] as Scored[], almost: [] as Scored[], next: null as Scored | null }
+    const all: Scored[] = SPOTS.map((spot) => ({
+      spot,
+      d: nearestOnShape(fix.lat, fix.lng, spot).d,
+      gap: metresToRange(fix.lat, fix.lng, fix.acc, spot),
+    }))
     const near = accurate ? all.filter((x) => x.gap <= 0).sort((a, b) => a.d - b.d) : []
-    const nearSet = new Set(near.map((x) => x.spot.id))
-    const rest = all.filter((x) => !doneIds.has(x.spot.id) && !nearSet.has(x.spot.id)).sort((a, b) => a.d - a.spot.range.r - (b.d - b.spot.range.r))
+    const close = accurate ? all.filter((x) => x.gap > 0 && x.gap <= ALMOST).sort((a, b) => a.gap - b.gap) : []
+    const shown = new Set([...near, ...close].map((x) => x.spot.id))
+    const rest = all.filter((x) => !doneIds.has(x.spot.id) && !shown.has(x.spot.id)).sort((a, b) => a.d - b.d)
     // 定位太差時，比誤差還近的「下一站」沒有意義（可能其實已經到了），找誤差以外的
-    const far = accurate ? rest : rest.filter((x) => x.d - x.spot.range.r > fix.acc)
-    return { nearby: near, next: far[0] ?? null }
+    const far = accurate ? rest : rest.filter((x) => x.d > fix.acc)
+    return { nearby: near, almost: close, next: far[0] ?? null }
   }, [fix, accurate, doneIds])
 
   const stamp = async (spot: Spot, confirmed = false) => {
@@ -217,7 +229,27 @@ export function WhereAmI() {
             </section>
           )}
 
-          {accurate && nearby.length === 0 && <p className="where-none">附近沒有可蓋章的景點。</p>}
+          {almost.length > 0 && (
+            <section className="almost" aria-label="就快到了">
+              <span className="almost-head">就快到了 · 再走近一點</span>
+              {almost.map(({ spot, d }) => (
+                <div key={spot.id} className="almost-row">
+                  <div className="nearby-text">
+                    <span className="almost-name">{spot.name}</span>
+                    <span className="nearby-meta">
+                      距離 {dist(d)} · {spot.area}
+                    </span>
+                  </div>
+                  <a className="btn-small" href={navHref(navTarget(fix!.lat, fix!.lng, spot))} target="_blank" rel="noopener">
+                    導航
+                  </a>
+                </div>
+              ))}
+              <p className="almost-tip">走到門口或範圍裏面，再按上面的「重新定位」。</p>
+            </section>
+          )}
+
+          {accurate && nearby.length === 0 && almost.length === 0 && <p className="where-none">附近沒有可蓋章的景點。</p>}
 
           {next && <Ticket item={next} fix={fix!} code={codeOf[next.spot.district]?.code ?? ''} districtLabel={codeOf[next.spot.district] ? label(codeOf[next.spot.district]) : next.spot.district} />}
         </>
@@ -260,15 +292,14 @@ export function WhereAmI() {
 /** 「下一站」票根：離你最近、還沒蓋章的景點；按下打開 Google 地圖導航 */
 function Ticket({ item, fix, code, districtLabel }: { item: Scored; fix: Fix; code: string; districtLabel: string }) {
   const { spot, d } = item
-  const dist = formatDistance(Math.max(0, d - spot.range.r))
-  const to = navTarget(fix.lat, fix.lng, spot)
-  const href = `https://www.google.com/maps/dir/?api=1&destination=${to.lat.toFixed(5)},${to.lng.toFixed(5)}`
+  const dist = formatDistance(d)
+  const href = navHref(navTarget(fix.lat, fix.lng, spot))
   return (
-    <a className="ticket" href={href} target="_blank" rel="noopener" aria-label={`下一站：${districtLabel}${spot.name}，${spot.tip}，還差 ${dist.num} ${dist.unit}就可以蓋章，用 Google 地圖導航`}>
+    <a className="ticket" href={href} target="_blank" rel="noopener" aria-label={`下一站：${districtLabel}${spot.name}，${spot.tip}，距離 ${dist.num} ${dist.unit}，用 Google 地圖導航`}>
       <div className="ticket-main">
         <div className="ticket-top">
           <span className="ticket-title">下一站</span>
-          <span className="ticket-note">走到就可以蓋 · 按下導航</span>
+          <span className="ticket-note">最近的未蓋章景點 · 按下導航</span>
         </div>
         <div className="ticket-band">
           <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
@@ -282,7 +313,7 @@ function Ticket({ item, fix, code, districtLabel }: { item: Scored; fix: Fix; co
       </div>
       <div className="ticket-perf" aria-hidden="true" />
       <div className="ticket-stub">
-        <span className="ticket-unit">還差</span>
+        <span className="ticket-unit">距離</span>
         <span className="ticket-num">{dist.num}</span>
         <span className="ticket-unit">{dist.unit}</span>
         <span className="ticket-code">

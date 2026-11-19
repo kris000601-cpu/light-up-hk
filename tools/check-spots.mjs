@@ -23,7 +23,7 @@ for (const s of csv) {
   if (!DISTRICTS.has(s.district)) bad(`${who}：區名「${s.district}」不是 18 區之一`)
   if (!(s.lat > 22.13 && s.lat < 22.58 && s.lng > 113.82 && s.lng < 114.45)) bad(`${who}：座標 ${s.lat}, ${s.lng} 不在香港`)
   if (!s.name || !s.area || !s.tip || !s.kind) bad(`${who}：景點 / 小地名 / 一句推薦 / 類型 有空白`)
-  if (s.radius && !(s.radius >= 50 && s.radius <= 1000)) bad(`${who}：範圍米 ${s.radius} 不合理（50–1000）`)
+  if (!(s.radius >= 30 && s.radius <= 300)) bad(`${who}：範圍米「${s.radius || '空白'}」不合理（要填 30–300）`)
 }
 
 // 2. CSV ↔ spots.json（忘了跑 npm run spots 就會對不上）
@@ -40,7 +40,7 @@ for (const s of csv) {
   const r = j.range
   if (!r || !(r.r > 0)) bad(`${s.id} ${s.name}：沒有範圍`)
   else if (s.shape && !r.points?.length && !r.lines?.length && !r.areas?.length) bad(`${s.id} ${s.name}：CSV 寫了範圍「${s.shape}」，但 spots.json 裏是空的`)
-  else if (!s.shape && r.r !== (s.radius || 300)) bad(`${s.id} ${s.name}：範圍米不一致`)
+  else if (r.r !== s.radius) bad(`${s.id} ${s.name}：範圍米不一致`)
 }
 
 // 3. 核對頁的數據要跟 App 的一樣

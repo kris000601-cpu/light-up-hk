@@ -87,10 +87,13 @@ export function navTarget(lat: number, lng: number, spot: SpotLike): { lat: numb
   return { lat: p.lat, lng: p.lng }
 }
 
+/** 定位誤差最多補多少米 */
+export const MAX_COMP = 50
+
 /**
  * 離「可蓋章」還差多少米（≤ 0 就是到了）。
- * accuracy：手機報告的定位誤差（米），最多補 100 米，免得人到了卻因為定位飄了蓋不到。
+ * accuracy：手機報告的定位誤差（米），最多補 50 米，免得人到了卻因為定位飄了蓋不到。
  */
 export function metresToRange(lat: number, lng: number, accuracy: number, spot: SpotLike): number {
-  return distanceToShape(lat, lng, spot) - spot.range.r - Math.min(Math.max(accuracy, 0), 100)
+  return distanceToShape(lat, lng, spot) - spot.range.r - Math.min(Math.max(accuracy, 0), MAX_COMP)
 }

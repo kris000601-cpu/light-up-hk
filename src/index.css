@@ -1290,3 +1290,41 @@ button:disabled {
 .test-tools .fake-note {
   margin-top: 8px;
 }
+
+/* 就快到了（灰色，沒有印泥紅） */
+.almost {
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.almost-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+
+.almost-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 2px;
+}
+
+.almost-name {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--sub);
+}
+
+.almost .btn-small {
+  text-decoration: none;
+}
+
+.almost-tip {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--sub);
+}

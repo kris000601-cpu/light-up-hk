@@ -16,7 +16,7 @@
 
 ## 文件
 - `data/spots.csv`：景點清單，以這份為準（Chris 一般在聊天裏說要改甚麼，由 Claude 改）。第一欄「編號」（s001…）一旦用過就永遠不改、不重用——手機裏存的章靠它認景點；新景點接着用下一個號，刪掉的號空着。`npm run check`（`tools/check-spots.mjs`，`npm run build` 會先跑）離線核對 CSV ↔ spots.json ↔ 核對頁數據、區名、座標，對不上就部署失敗。`npm run spots`（`tools/build-spots.mjs`）生成 `data/spots.json`（App 用）和 `public/check/data.js`（核對頁用）。
-  - 「範圍」欄決定站在哪裏算到了：空白 = 點；否則是 OpenStreetMap 地物編號（`way/…` `relation/…` `node/…`，可多個；長山徑加 `@米數` 只取離景點座標這麼遠的一段；也可直接寫 `緯度,經度`）。線 = 沿線都算，面 = 範圍內都算。「範圍米」= 再往外擴多少（預設點 300、線 / 面 200）。判斷時再補手機報告的定位誤差（最多 100 米），見 `src/lib/range.ts`。
+  - 「範圍」欄決定站在哪裏算到了：空白 = 點；否則是 OpenStreetMap 地物編號（`way/…` `relation/…` `node/…`，可多個；長山徑加 `@米數` 只取離景點座標這麼遠的一段；也可直接寫 `緯度,經度`）。線 = 沿線都算，面 = 範圍內都算。「範圍米」= 在地方本身的形狀外再擴多少，**分三檔**（2026-11-19 Chris 定）：市區建築 / 街道 50、海濱 / 大公園 / 海灘 80、郊野 / 山徑 / 離島 150；只有中心點的村落另外放寬（茶果嶺 120、荔枝窩 200）。原則：「到了」＝站在那個地方或它門口。範圍盡量用 OSM 的真實輪廓，不用單點大圓圈。判斷時再補手機報告的定位誤差（最多 50 米），誤差 > 100 米不給蓋，見 `src/lib/range.ts`、`src/lib/locate.ts`。App 給用戶看的距離只有一種：到地方本身（形狀）的距離；差不到 100 米顯示「就快到了」。
   - 2026-11-19 已用 OSM 逐個核對座標、定好範圍，Chris 在核對頁看過，全部「座標已核對 = 是」。
   - 核對頁（內部，App 裏沒有入口）：https://kris000601-cpu.github.io/light-up-hk/check/index.html ，說明文字在 `public/check/notes.js`。`tools/find-spots.mjs` 用 OSM 地名搜索找候選地點。
 - `data/hk18-official.geojson`：民政事務總署 18 區界（DATA.GOV.HK，含海面）。`npm run map`（`tools/build-map.mjs`）用 OpenStreetMap 海岸線裁掉海面、簡化、投影，生成 `src/data/hkmap.json` 給 App 用。海岸線緩存在 `tools/.cache/`（不入庫，沒有會自動下載）。
