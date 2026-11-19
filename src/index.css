@@ -915,3 +915,27 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.credit a {
+  color: inherit;
+}
+
+/* 讀不到印章時的提示 */
+.read-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--seal-text);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.read-error p {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--seal-text);
+}

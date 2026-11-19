@@ -41,8 +41,8 @@ export function InstallHint() {
         <b>先加到主畫面，再開始蓋章</b>
         <p>
           {p === 'ios'
-            ? 'iPhone 上，主畫面的 App 和 Safari 是分開存印章的；從主畫面打開，印章也不會被自動清走。'
-            : '像 App 一樣從主畫面打開，印章也不會被瀏覽器清走。'}
+            ? 'iPhone 上，主畫面的 App 和 Safari 是分開存印章的，所以請先加到主畫面，以後都從主畫面打開。'
+            : '像 App 一樣從主畫面打開，印章也比較不容易被瀏覽器清走。'}
         </p>
         <InstallSteps />
       </div>

@@ -1,13 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
 
 // GitHub Pages 的網址是 https://<用戶名>.github.io/<倉庫名>/
 // 部署時由 GitHub Actions 傳入 BASE_PATH=/<倉庫名>/；本機開發用 /
 const base = process.env.BASE_PATH ?? '/'
 
+// 版本標記：提交編號 + 打包時間（香港時間），顯示在「我的」頁底部，方便確認手機跑的是哪一版
+let sha = process.env.GITHUB_SHA ?? ''
+try {
+  sha ||= execSync('git rev-parse HEAD').toString()
+} catch {
+  sha = 'local'
+}
+const when = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })
+  .format(new Date())
+  .replace(/(\d+)\/(\d+), /, '$2.$1 ')
+const BUILD = `${sha.trim().slice(0, 7)} · ${when}`
+
 export default defineConfig({
   base,
+  define: { __BUILD__: JSON.stringify(BUILD) },
   plugins: [
     react(),
     VitePWA({

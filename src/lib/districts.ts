@@ -3,6 +3,7 @@ import spotsData from '../../data/spots.json'
 import { useMemo } from 'react'
 import type { Range } from './range'
 import { useStamps, type Stamp } from './stamps'
+import { useTestMode } from './testMode'
 
 export type Region = '港島' | '九龍' | '新界'
 export const REGIONS: Region[] = ['港島', '九龍', '新界']
@@ -43,7 +44,6 @@ export interface District {
 
 export const MAP_W = mapData.width
 export const MAP_H = mapData.height
-export const MAP_SOURCE = mapData.source
 
 export const SPOTS = spotsData as Spot[]
 export const SPOT_BY_ID: Record<string, Spot> = Object.fromEntries(SPOTS.map((s) => [s.id, s]))
@@ -70,7 +70,8 @@ const BASE = mapData.districts.map((m) => {
 /** 按手機裏的印章算出各區進度 */
 export function buildDistricts(stamps: Stamp[]): District[] {
   const last: Record<string, Stamp> = {}
-  for (const st of stamps) last[st.spotId] = st // stamps 已按時間排好，後蓋的蓋過先蓋的
+  // stamps 已按時間排好：顯示最近一次的正式章；只有測試章時才顯示測試章
+  for (const st of stamps) if (!last[st.spotId] || last[st.spotId].test || !st.test) last[st.spotId] = st
   return BASE.map((b) => {
     const done: Record<string, Stamp> = {}
     for (const s of b.spots) if (last[s.id]) done[s.id] = last[s.id]
@@ -79,9 +80,16 @@ export function buildDistricts(stamps: Stamp[]): District[] {
   })
 }
 
+/** 算進度用的印章：測試章只在測試模式開着時才算 */
+export function useCountedStamps(): Stamp[] {
+  const { stamps } = useStamps()
+  const test = useTestMode()
+  return useMemo(() => (test ? stamps : stamps.filter((s) => !s.test)), [stamps, test])
+}
+
 /** 各區（含進度），印章一變就重算 */
 export function useDistricts(): District[] {
-  const { stamps } = useStamps()
+  const stamps = useCountedStamps()
   return useMemo(() => buildDistricts(stamps), [stamps])
 }
 

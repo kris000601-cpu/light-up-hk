@@ -3,9 +3,9 @@ import { HKMap } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
 import { InstallHint } from '../components/InstallHint'
-import { MAP_SOURCE, REGIONS, SPOT_BY_ID, regionSummary, summary, useDistricts, type District, type Region } from '../lib/districts'
+import { REGIONS, SPOT_BY_ID, regionSummary, summary, useCountedStamps, useDistricts, type District, type Region } from '../lib/districts'
 import { monthDay } from '../lib/format'
-import { useStamps } from '../lib/stamps'
+import { reloadStamps, useStamps } from '../lib/stamps'
 
 const LEGEND = [
   { level: 0, text: '未去過' },
@@ -25,7 +25,8 @@ export function MapPage() {
   const [region, setRegion] = useState<Region | null>(initialRegion)
   const [detailCode, setDetailCode] = useState<string | null>(params.get('sheet') === 'district' ? initial : null)
   const districts = useDistricts()
-  const { stamps } = useStamps()
+  const { ready, error } = useStamps()
+  const stamps = useCountedStamps()
   const selected = districts.find((d) => d.code === selCode) ?? null
   const detail = districts.find((d) => d.code === detailCode) ?? null
   const setSelected = useCallback((d: District | null) => setSelCode(d?.code ?? null), [])
@@ -45,32 +46,41 @@ export function MapPage() {
             <span className="eyebrow">遊歷護照 · 編號 0008</span>
             <h1 className="app-title">點亮香港</h1>
           </div>
-          {hasTest && <span className="demo-badge">含測試章</span>}
+          {hasTest && <span className="demo-badge">測試模式 · 含測試章</span>}
         </div>
         <dl className="passport-stats">
           <div>
             <dt>已點亮</dt>
             <dd>
-              {s.lit}
+              {ready ? s.lit : '–'}
               <small> / 18 區</small>
             </dd>
           </div>
           <div>
             <dt>景點章</dt>
             <dd>
-              {s.stamps}
+              {ready ? s.stamps : '–'}
               <small> / {s.total} 枚</small>
             </dd>
           </div>
           <div>
             <dt>最近蓋章</dt>
             <dd>
-              {latest ? monthDay(latest.at) : <small className="none">還沒蓋章</small>}
+              {latest ? monthDay(latest.at) : ready && <small className="none">還沒蓋章</small>}
             </dd>
             {latest && <dd className="stat-place">{SPOT_BY_ID[latest.spotId]?.area ?? latest.spotName}</dd>}
           </div>
         </dl>
       </header>
+
+      {error && (
+        <div className="read-error" role="alert">
+          <p>{error}</p>
+          <button type="button" className="btn-small" onClick={reloadStamps}>
+            再試一次
+          </button>
+        </div>
+      )}
 
       <InstallHint />
 
@@ -101,7 +111,12 @@ export function MapPage() {
         })}
       </div>
 
-      <p className="credit">{MAP_SOURCE}</p>
+      <p className="credit">
+        區界：民政事務總署（DATA.GOV.HK）；海岸線、景點範圍：
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+          © OpenStreetMap 貢獻者
+        </a>
+      </p>
 
       <RegionSheet
         region={region}

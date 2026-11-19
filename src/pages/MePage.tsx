@@ -68,7 +68,7 @@ export function MePage() {
       {test && <TestTools />}
 
       <p className="version" onClick={onVersionTap}>
-        點亮香港 · 版本 {VERSION}
+        點亮香港 · 版本 {VERSION}（{__BUILD__}）
         {test && ' · 測試模式'}
       </p>
     </>

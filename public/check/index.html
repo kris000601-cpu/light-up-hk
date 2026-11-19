@@ -56,7 +56,7 @@
 <script>
 const SPOTS = window.SPOTS, NOTES = window.NOTES || {}
 const map = L.map('map', { zoomControl: false, attributionControl: true }).setView([22.35, 114.13], 10)
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map)
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap 贡献者</a>' }).addTo(map)
 
 const NAVY = '#2d3e5c', SEAL = '#b9473a', ZONE = '#3d7be0'
 const typeOf = (s) => (s.range.areas ? 'area' : s.range.lines ? 'line' : 'point')

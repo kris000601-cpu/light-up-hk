@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc --noEmit && vite build",
+    "build": "node tools/check-spots.mjs && tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "icons": "pwa-assets-generator",
     "map": "node tools/build-map.mjs",
-    "spots": "node tools/build-spots.mjs"
+    "spots": "node tools/build-spots.mjs",
+    "check": "node tools/check-spots.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",
