@@ -113,6 +113,24 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
     }
   }, [])
 
+  // iPhone：長按紙面約 0.5 秒，系統會把章面當成圖片，彈出「儲存圖片 / 拷貝」選單（還會震一下），
+  // 並取消我們的按壓 → 章退回去。手指一碰紙面就告訴系統「這個觸摸由 App 處理」：
+  // 不彈選單、不選字、不出放大鏡。React 的 onTouchStart 不能這樣做（它是 passive），所以直接掛原生監聽。
+  useEffect(() => {
+    const n = el.stage.current
+    if (!n) return
+    const own = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault()
+    }
+    n.addEventListener('touchstart', own, { passive: false })
+    n.addEventListener('touchmove', own, { passive: false })
+    return () => {
+      n.removeEventListener('touchstart', own)
+      n.removeEventListener('touchmove', own)
+    }
+    // el.stage 是固定的 ref
+  }, [])
+
   // 蓋章頁開着時，App 的自動更新先等一等
   useEffect(() => holdUpdates(), [])
 

@@ -1635,3 +1635,16 @@ button:disabled {
   height: 190px;
   margin: 4px auto 0;
 }
+
+/* iPhone：紙面上的任何東西都不能被長按成「圖片」、不能選字、不能拖走（見 StampPage 的 touchstart） */
+.sp-stage,
+.sp-stage * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.sp-stage svg {
+  pointer-events: none;
+}
