@@ -15,6 +15,8 @@ export interface FaceData {
   no: string
   name: string
   kind: string
+  /** 景點編號：有專屬圖案的景點（例如尖沙咀鐘樓）靠它認 */
+  spotId?: string
 }
 
 export const WET = '#B5231A'
@@ -51,7 +53,7 @@ export function FaceBody({ f, c }: { f: FaceData; c: string }) {
         <path d="M24 44H186M24 124H186" strokeWidth={0.9} />
         <path d="M93 54V114" strokeWidth={0.9} />
         <g transform="translate(24 50) scale(0.66)" strokeWidth={2.3 / 0.66} strokeLinecap="round" strokeLinejoin="round">
-          <path d={PICTOS[pictoFor(f.kind)]} />
+          <path d={PICTOS[pictoFor(f.kind, f.spotId)]} />
         </g>
       </g>
       <g fill={c}>
@@ -222,8 +224,8 @@ export function DryStamp({ f, style, seed, angle }: { f: FaceData; style?: CSSPr
 }
 
 /** 從一枚章的記錄算出章面要寫的字 */
-export function faceOf(p: { at: number; no: number | null; name: string; district: string; kind: string }): FaceData {
+export function faceOf(p: { at: number; no: number | null; name: string; district: string; kind: string; spotId?: string }): FaceData {
   const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(p.at)
   const get = (t: string) => parts.find((x) => x.type === t)?.value ?? ''
-  return { district: p.district, year: get('year'), month: get('month'), day: get('day'), no: p.no == null ? '測試' : String(p.no), name: p.name, kind: p.kind }
+  return { district: p.district, year: get('year'), month: get('month'), day: get('day'), no: p.no == null ? '測試' : String(p.no), name: p.name, kind: p.kind, spotId: p.spotId }
 }

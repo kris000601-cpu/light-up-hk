@@ -73,7 +73,7 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
       page,
       at,
       visitedAfter: d.visited + (d.done[spot.id] ? 0 : 1),
-      face: faceOf({ at, no: fix.fake ? null : realMax + 1, name: spot.name, district: label(d), kind: spot.kind }),
+      face: faceOf({ at, no: fix.fake ? null : realMax + 1, name: spot.name, district: label(d), kind: spot.kind, spotId: spot.id }),
     }
   })
   const { d, before, page, face } = info
@@ -334,7 +334,7 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
   const olds = before.map((b, i) => {
     const px = b.px ?? 0.5, py = b.py ?? 0.4
     const rot = b.rot ?? ((b.id * 37) % 15) - 7
-    const f = faceOf({ at: b.at, no: b.test ? null : b.no, name: spot.name, district: label(d), kind: spot.kind })
+    const f = faceOf({ at: b.at, no: b.test ? null : b.no, name: spot.name, district: label(d), kind: spot.kind, spotId: spot.id })
     return { key: b.uid ?? b.id, f, px, py, rot, seed: 11 + (i % 5) }
   })
 
