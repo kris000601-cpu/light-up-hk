@@ -19,10 +19,10 @@ const SETTLE_MS = 320
  * 慣性滑動：每毫秒保留的速度；滑出邊界後摩擦大得多，很快停下再彈回。
  * 地圖框只有約 340px 寬，所以比 iPhone 長列表（0.998）澀得多；滑行距離 ≈ 速度 ÷ (1 − 摩擦)。
  */
-const FRICTION = 0.99
+const FRICTION = 0.993
 const FRICTION_OUT = 0.97
-/** 甩得再猛，起滑速度也不超過這個（像素 / 毫秒）→ 最遠約滑 0.9 / 0.01 ≈ 90px */
-const FLING_MAX_SPEED = 0.9
+/** 甩得再猛，起滑速度也不超過這個（像素 / 毫秒）→ 最遠約滑 1.5 / 0.007 ≈ 210px */
+const FLING_MAX_SPEED = 1.5
 /** 放手時手指速度超過這個（像素 / 毫秒）才算「甩」；放手前停頓超過 FLING_PAUSE_MS 就不滑 */
 const FLING_MIN_SPEED = 0.1
 const FLING_PAUSE_MS = 60
