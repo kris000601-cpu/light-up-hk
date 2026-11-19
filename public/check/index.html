@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>景点核对</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  :root { --paper: #f3eddf; --card: #fbf8f0; --navy: #2d3e5c; --ink: #1e2b3c; --sub: #5c667a; --hair: #c1c1be; --seal: #b9473a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 14px/1.5 -apple-system, 'Noto Sans TC', 'PingFang HK', sans-serif; }
+  body { display: flex; flex-direction: column; }
+  #map { flex: 0 0 55vh; border-bottom: 1px solid var(--hair); }
+  header { padding: 10px 16px 6px; }
+  h1 { font-size: 17px; margin: 0; }
+  .lead { margin: 2px 0 0; color: var(--sub); font-size: 12px; }
+  .filters { display: flex; gap: 6px; padding: 6px 16px 8px; overflow-x: auto; }
+  .filters button { flex: none; border: 1px solid var(--hair); background: var(--card); color: var(--sub); border-radius: 14px; padding: 3px 10px; font: inherit; font-size: 12px; }
+  .filters button.on { background: var(--navy); border-color: var(--navy); color: var(--card); }
+  #list { flex: 1; overflow-y: auto; padding: 0 16px 24px; -webkit-overflow-scrolling: touch; }
+  .dist { margin: 12px 0 4px; font-size: 12px; color: var(--sub); font-weight: 600; }
+  .row { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; margin-bottom: 6px; background: var(--card); border: 1px solid var(--hair); border-radius: 10px; cursor: pointer; }
+  .row.on { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy); }
+  .row b { font-weight: 600; }
+  .row .meta { font-size: 12px; color: var(--sub); }
+  .row .note { font-size: 12px; color: var(--seal); margin-top: 2px; }
+  .tag { flex: none; font-size: 11px; border-radius: 4px; padding: 0 5px; margin-top: 2px; border: 1px solid var(--hair); color: var(--sub); }
+  .tag.line, .tag.area { border-color: var(--navy); color: var(--navy); }
+  .info { margin-top: 6px; padding: 8px 10px; background: var(--card); border: 1px solid var(--navy); border-radius: 10px; font-size: 13px; }
+  .info b { font-size: 15px; }
+  .info .note { color: var(--seal); }
+  .info a { color: var(--navy); }
+  .leaflet-container { background: #e9e4d6; font: inherit; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<header>
+  <h1>景点核对 <span id="count" style="font-weight:400;color:var(--sub);font-size:13px"></span></h1>
+  <div id="info" class="info" hidden></div>
+  <p class="lead" id="lead">内部页面，用户看不到。淡蓝色 = 站在这里就能盖章。点下面的景点，地图会飞过去；弹出框里可以跳到 Google 地图对照。</p>
+</header>
+<div class="filters" id="filters">
+  <button data-f="all" class="on">全部</button>
+  <button data-f="note">要你看的</button>
+  <button data-f="line">线（山径、长廊）</button>
+  <button data-f="area">面（公园、岛、海滩）</button>
+  <button data-f="point">点</button>
+</div>
+<div id="list"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data.js"></script>
+<script src="notes.js"></script>
+<script>
+const SPOTS = window.SPOTS, NOTES = window.NOTES || {}
+const map = L.map('map', { zoomControl: false, attributionControl: true }).setView([22.35, 114.13], 10)
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map)
+
+const NAVY = '#2d3e5c', SEAL = '#b9473a', ZONE = '#3d7be0'
+const typeOf = (s) => (s.range.areas ? 'area' : s.range.lines ? 'line' : 'point')
+const TYPE_NAME = { point: '点', line: '线', area: '面' }
+const ll = (p) => [p[1], p[0]]
+
+// 線和面的「可蓋章範圍」：用粗度等於 2 × 範圍米的圓頭描邊來畫，縮放時重算粗度
+const thick = []
+function mPerPx() {
+  const c = map.getCenter()
+  return (40075016.686 * Math.cos((c.lat * Math.PI) / 180)) / 2 ** (map.getZoom() + 8)
+}
+function updateThick() {
+  const k = mPerPx()
+  for (const { layer, r } of thick) layer.setStyle({ weight: Math.max(2, (2 * r) / k) })
+}
+
+const groups = {}
+for (const s of SPOTS) {
+  const g = L.featureGroup().addTo(map)
+  const r = s.range.r
+  const style = { color: ZONE, opacity: 0.28, lineCap: 'round', lineJoin: 'round', fill: false, interactive: false }
+  for (const line of s.range.lines ?? []) {
+    const l = L.polyline(line.map(ll), style).addTo(g); thick.push({ layer: l, r })
+    L.polyline(line.map(ll), { color: NAVY, weight: 2, opacity: 0.9, interactive: false }).addTo(g)
+  }
+  for (const area of s.range.areas ?? []) {
+    const l = L.polygon(area.map(ll), { ...style, fill: true, fillColor: ZONE, fillOpacity: 0.28 }).addTo(g); thick.push({ layer: l, r })
+    L.polygon(area.map(ll), { color: NAVY, weight: 1.5, opacity: 0.9, fill: false, interactive: false }).addTo(g)
+  }
+  for (const p of s.range.points ?? []) L.circle(ll(p), { radius: r, stroke: false, fillColor: ZONE, fillOpacity: 0.28, interactive: false }).addTo(g)
+  if (typeOf(s) === 'point') L.circle([s.lat, s.lng], { radius: r, stroke: false, fillColor: ZONE, fillOpacity: 0.28, interactive: false }).addTo(g)
+  const dot = L.circleMarker([s.lat, s.lng], { radius: 6, color: '#fff', weight: 2, fillColor: NOTES[s.id] ? SEAL : NAVY, fillOpacity: 1 }).addTo(g)
+  const gmap = `https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`
+  dot.on('click', () => select(s.id, false))
+  groups[s.id] = { g, dot }
+}
+map.on('zoomend', updateThick)
+updateThick()
+
+// 列表
+const list = document.getElementById('list')
+let filter = 'all', current = null
+function renderList() {
+  list.innerHTML = ''
+  let last = '', n = 0
+  for (const s of SPOTS) {
+    const t = typeOf(s)
+    if (filter === 'note' ? !NOTES[s.id] : filter !== 'all' && filter !== t) continue
+    n++
+    if (s.district !== last) { last = s.district; list.insertAdjacentHTML('beforeend', `<div class="dist">${s.district}</div>`) }
+    const el = document.createElement('div')
+    el.className = 'row' + (current === s.id ? ' on' : '')
+    el.dataset.id = s.id
+    el.innerHTML = `<span class="tag ${t}">${TYPE_NAME[t]}</span><div><b>${s.name}</b><div class="meta">${s.area} · 往外 ${s.range.r} 米</div>${NOTES[s.id] ? `<div class="note">${NOTES[s.id]}</div>` : ''}</div>`
+    el.onclick = () => select(s.id, true)
+    list.appendChild(el)
+  }
+  document.getElementById('count').textContent = `${n} / ${SPOTS.length}`
+}
+function select(id, fly) {
+  current = id
+  const { g } = groups[id]
+  if (fly) map.flyToBounds(g.getBounds().pad(0.15), { maxZoom: 16, duration: 0.6 })
+  const s = SPOTS.find((x) => x.id === id)
+  const info = document.getElementById('info')
+  info.hidden = false
+  document.getElementById('lead').hidden = true
+  info.innerHTML = `<b>${s.name}</b>　${s.district} · ${s.area} · ${TYPE_NAME[typeOf(s)]}，往外 ${s.range.r} 米${NOTES[id] ? `<div class="note">${NOTES[id]}</div>` : ''}<a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" rel="noopener">在 Google 地图打开这个位置 ›</a>`
+  list.querySelectorAll('.row').forEach((r) => r.classList.toggle('on', r.dataset.id === id))
+  const row = list.querySelector(`.row[data-id="${id}"]`)
+  if (row && !fly) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+}
+document.getElementById('filters').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return
+  filter = b.dataset.f
+  document.querySelectorAll('#filters button').forEach((x) => x.classList.toggle('on', x === b))
+  renderList()
+})
+renderList()
+</script>
+</body>
+</html>

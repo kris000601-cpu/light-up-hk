@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "icons": "pwa-assets-generator",
-    "map": "node tools/build-map.mjs"
+    "map": "node tools/build-map.mjs",
+    "spots": "node tools/build-spots.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

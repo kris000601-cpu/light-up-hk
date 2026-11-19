@@ -1,5 +1,6 @@
 import mapData from '../data/hkmap.json'
 import spotsData from '../../data/spots.json'
+import type { Range } from './range'
 
 export type Region = '港島' | '九龍' | '新界'
 export const REGIONS: Region[] = ['港島', '九龍', '新界']
@@ -14,6 +15,8 @@ export interface Spot {
   lng: number
   kind: string
   verified: boolean
+  /** 可蓋章範圍，見 range.ts */
+  range: Range
 }
 
 /** 0 未去過 · 1 去過一兩個 · 2 過半 · 3 集齊 */

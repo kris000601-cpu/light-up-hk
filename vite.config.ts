@@ -32,6 +32,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // public/check/ 是內部的景點核對頁，不屬於 App：不預先緩存，也不要被 App 的離線頁面接管
+        globIgnores: ['check/**'],
+        navigateFallbackDenylist: [/\/check\//],
         // Google Fonts 的字體檔：第一次載入後存起來，之後離線也能用
         runtimeCaching: [
           {
