@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom'
 import { label, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { formatDistance, type Fix } from '../lib/locate'
 import { addStamp, useStamps, type Stamp } from '../lib/stamps'
+import { useTestMode } from '../lib/testMode'
 import { holdUpdates } from '../lib/updates'
 import { DRY_THRESHOLDS, DryStamp, StampLayer, faceOf } from './StampArt'
 
@@ -113,22 +114,62 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
     }
   }, [])
 
-  // iPhone：長按紙面約 0.5 秒，系統會把章面當成圖片，彈出「儲存圖片 / 拷貝」選單（還會震一下），
-  // 並取消我們的按壓 → 章退回去。手指一碰紙面就告訴系統「這個觸摸由 App 處理」：
-  // 不彈選單、不選字、不出放大鏡。React 的 onTouchStart 不能這樣做（它是 passive），所以直接掛原生監聽。
+  // ---------- 測試模式：紙面頂部顯示一行除錯記錄（手指按下後每一步、版本號），iPhone 出問題時截圖就知道卡在哪 ----------
+  const test = useTestMode()
+  const [log, setLog] = useState<string[]>([])
+  const t0 = useRef(0)
+  const dbg = (m: string) => {
+    if (!test) return
+    const t = Math.round(performance.now() - t0.current)
+    setLog((l) => [...l.slice(-9), `${t} ${m}`])
+  }
+
+  // ---------- 手機：用最基本的觸摸事件驅動按壓 ----------
+  // iPhone 的瀏覽器長按約 0.5 秒會把章面當成圖片，彈出「儲存圖片」選單（還會震一下），並中途取消「指標事件」，
+  // 章就退回去。所以手機上：
+  //   1. 紙面最上面蓋一層透明的 .sp-hit，手指碰到的永遠是它，不是章面圖片；
+  //   2. touchstart 一開始就 preventDefault（告訴系統這個觸摸由 App 處理：不彈選單、不選字、不出放大鏡）；
+  //   3. 按下 / 放手只看 touchstart / touchend / touchcancel，不靠會被系統中途取消的指標事件。
+  // React 的 onTouchStart 是 passive 的，不能 preventDefault，所以直接掛原生監聽。
+  const input = useRef({ start: (_x: number | null, _y: number | null, _m: boolean) => {}, finish: () => {}, dbg: (_m: string) => {} })
   useEffect(() => {
     const n = el.stage.current
     if (!n) return
-    const own = (e: TouchEvent) => {
+    let active: number | null = null
+    const onStart = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault()
+      const t = e.changedTouches[0]
+      if (active !== null || !t) return
+      active = t.identifier
+      t0.current = performance.now()
+      input.current.dbg(`觸摸開始${e.cancelable ? '' : '（不可取消）'}`)
+      input.current.start(t.clientX, t.clientY, false)
+    }
+    const onEnd = (e: TouchEvent) => {
+      if (active === null || ![...e.changedTouches].some((t) => t.identifier === active)) return
+      active = null
+      input.current.dbg(e.type === 'touchcancel' ? '系統取消了觸摸' : '放手')
+      input.current.finish()
+    }
+    const onMove = (e: TouchEvent) => {
       if (e.cancelable) e.preventDefault()
     }
-    n.addEventListener('touchstart', own, { passive: false })
-    n.addEventListener('touchmove', own, { passive: false })
-    return () => {
-      n.removeEventListener('touchstart', own)
-      n.removeEventListener('touchmove', own)
+    const onMenu = (e: Event) => {
+      e.preventDefault()
+      input.current.dbg('擋住選單')
     }
-    // el.stage 是固定的 ref
+    n.addEventListener('touchstart', onStart, { passive: false })
+    n.addEventListener('touchmove', onMove, { passive: false })
+    n.addEventListener('touchend', onEnd)
+    n.addEventListener('touchcancel', onEnd)
+    n.addEventListener('contextmenu', onMenu)
+    return () => {
+      n.removeEventListener('touchstart', onStart)
+      n.removeEventListener('touchmove', onMove)
+      n.removeEventListener('touchend', onEnd)
+      n.removeEventListener('touchcancel', onEnd)
+      n.removeEventListener('contextmenu', onMenu)
+    }
   }, [])
 
   // 蓋章頁開着時，App 的自動更新先等一等
@@ -306,6 +347,7 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
       })
     }
     if (el.touch.current) el.touch.current.style.opacity = '0'
+    dbg('壓到底 · 蓋好')
     noise(0.014, 2400, 0.55, 'highpass')
     noise(0.2, 300, 0.85, 'lowpass', 0.008)
     buzz(18)
@@ -343,15 +385,27 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
       return
     }
     if (s.mode !== 'press') return
+    dbg(`未壓到底就放開（${Math.round(s.p * 100)}%）`)
     s.mode = 'retreat'
     setPhase('idle')
     loop()
   }
+  input.current = { start, finish, dbg }
 
   // ---------- 這一頁以前蓋過的章（乾的樣子） ----------
+  // 早期的章（第 3 步直接蓋的、測試工具蓋的）沒有記位置：分散放在幾個固定位置，免得全疊在正中間糊成一團
+  const SLOTS: [number, number, number][] = [
+    [0.36, 0.34, -4],
+    [0.64, 0.52, 3],
+    [0.4, 0.6, -2],
+    [0.62, 0.32, 5],
+    [0.5, 0.46, -6],
+  ]
+  let slot = 0
   const olds = before.map((b, i) => {
-    const px = b.px ?? 0.5, py = b.py ?? 0.4
-    const rot = b.rot ?? ((b.id * 37) % 15) - 7
+    const fallback = b.px == null ? SLOTS[slot++ % SLOTS.length] : null
+    const px = b.px ?? fallback![0], py = b.py ?? fallback![1]
+    const rot = b.rot ?? fallback?.[2] ?? 0
     const f = faceOf({ at: b.at, no: b.test ? null : b.no, name: spot.name, district: label(d), kind: spot.kind, spotId: spot.id })
     return { key: b.uid ?? b.id, f, px, py, rot, seed: 11 + (i % 5) }
   })
@@ -388,17 +442,20 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
         role="button"
         tabIndex={0}
         aria-label={`按住蓋章：${spot.name}`}
+        // 滑鼠 / 觸控筆用指標事件；手指用上面的觸摸事件（不理會手指的指標事件，免得被系統中途取消）
         onPointerDown={(e) => {
+          if (e.pointerType === 'touch') return dbg('指標按下（手指，交給觸摸處理）')
           try {
             e.currentTarget.setPointerCapture(e.pointerId)
           } catch {
             /* 舊瀏覽器 */
           }
+          t0.current = performance.now()
           start(e.clientX, e.clientY, e.pointerType === 'mouse')
         }}
-        onPointerUp={finish}
-        onPointerCancel={finish}
-        onLostPointerCapture={finish}
+        onPointerUp={(e) => e.pointerType !== 'touch' && finish()}
+        onPointerCancel={(e) => (e.pointerType === 'touch' ? dbg('系統取消了指標（已忽略）') : finish())}
+        onLostPointerCapture={(e) => e.pointerType !== 'touch' && finish()}
         onKeyDown={(e) => {
           if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault()
@@ -448,6 +505,13 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
           </div>
           <div ref={el.touch} className="sp-touch" />
         </div>
+        {/* 透明的一層：手指碰到的是它，不是下面的章面（iPhone 不會把它當成圖片） */}
+        <div className="sp-hit" aria-hidden="true" />
+        {test && (
+          <div className="sp-debug" aria-hidden="true">
+            {__BUILD__} · {log.join(' → ') || '等你按'}
+          </div>
+        )}
 
         {showGuide && (
           <>

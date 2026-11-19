@@ -143,7 +143,7 @@ function TestTools() {
                 type="button"
                 className="btn-small"
                 disabled={busy}
-                onClick={() => run(() => addStamp({ spotId: s.id, spotName: s.name, district: s.district, test: true }))}
+                onClick={() => run(() => addStamp({ spotId: s.id, spotName: s.name, district: s.district, test: true, px: 0.3 + Math.random() * 0.4, py: 0.3 + Math.random() * 0.3, rot: Math.round((-6 + Math.random() * 9) * 10) / 10 }))}
               >
                 蓋測試章
               </button>

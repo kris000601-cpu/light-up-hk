@@ -1648,3 +1648,24 @@ button:disabled {
 .sp-stage svg {
   pointer-events: none;
 }
+
+/* 蓋章頁：手指碰到的透明層，和測試模式的除錯記錄 */
+.sp-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: transparent;
+  touch-action: none;
+}
+
+.sp-debug {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 4px;
+  z-index: 4;
+  font: 10px/1.4 ui-monospace, Menlo, monospace;
+  color: var(--sub);
+  pointer-events: none;
+  word-break: break-all;
+}
