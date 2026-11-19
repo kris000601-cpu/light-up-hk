@@ -1,6 +1,7 @@
 import { label, type District } from '../lib/districts'
 import { Sheet } from './Sheet'
 import { Dots } from './Dots'
+import { monthDay } from '../lib/format'
 
 interface Props {
   district: District | null
@@ -25,8 +26,9 @@ export function DistrictSheet({ district, onClose }: Props) {
         <Dots visited={d.visited} total={d.total} level={d.level} />
       </div>
       <ul className="spot-list">
-        {d.spots.map((s, i) => {
-          const done = i < d.visited
+        {d.spots.map((s) => {
+          const st = d.done[s.id]
+          const done = !!st
           return (
             <li key={s.id} className={done ? 'spot done' : 'spot'}>
               <span className="spot-mark" aria-hidden="true">
@@ -38,7 +40,7 @@ export function DistrictSheet({ district, onClose }: Props) {
                   {s.area} · {s.tip}
                 </span>
               </span>
-              <span className="spot-state">{done ? '已蓋章' : '未去過'}</span>
+              <span className="spot-state">{st ? `${st.test ? '測試 · ' : ''}${monthDay(st.at)}` : '未去過'}</span>
             </li>
           )
         })}

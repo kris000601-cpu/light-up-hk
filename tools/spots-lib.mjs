@@ -37,11 +37,20 @@ export function toCsv(head, rows) {
   return '﻿' + [head, ...rows.map((r) => head.map((h) => r[h] ?? ''))].map((r) => r.map(esc).join(',')).join('\r\n') + '\r\n'
 }
 
-/** 按 CSV 的行序給 id：s001、s002…（跟現有 spots.json 一致） */
+/**
+ * 讀景點。「編號」一旦用過就永遠不改、不重用：手機裏存的章靠它認景點。
+ * 新景點接着用下一個號（s088、s089…），刪掉的景點號碼就空着。
+ */
 export function readSpots() {
   const { rows } = parseCsv(fs.readFileSync(CSV, 'utf8'))
-  return rows.map((r, i) => ({
-    id: 's' + String(i + 1).padStart(3, '0'),
+  const seen = new Set()
+  for (const r of rows) {
+    if (!/^s\d{3,}$/.test(r['編號'] ?? '')) throw new Error(`「${r['景點']}」的編號「${r['編號']}」不對，要像 s088`)
+    if (seen.has(r['編號'])) throw new Error(`編號 ${r['編號']} 重複了`)
+    seen.add(r['編號'])
+  }
+  return rows.map((r) => ({
+    id: r['編號'],
     district: r['區'],
     area: r['小地名'],
     name: r['景點'],

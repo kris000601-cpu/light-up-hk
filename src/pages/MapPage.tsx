@@ -2,7 +2,10 @@ import { useCallback, useState } from 'react'
 import { HKMap } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
-import { DISTRICTS, IS_DEMO, MAP_SOURCE, REGIONS, regionSummary, summary, type District, type Region } from '../lib/districts'
+import { InstallHint } from '../components/InstallHint'
+import { MAP_SOURCE, REGIONS, SPOT_BY_ID, regionSummary, summary, useDistricts, type District, type Region } from '../lib/districts'
+import { monthDay } from '../lib/format'
+import { useStamps } from '../lib/stamps'
 
 const LEGEND = [
   { level: 0, text: '未去過' },
@@ -13,17 +16,26 @@ const LEGEND = [
 
 // 網址參數只用於截圖檢查：?d=E 選中某區，&sheet=district 打開區詳情，?region=九龍 打開分組列表
 const params = new URLSearchParams(window.location.search)
-const initial = DISTRICTS.find((d) => d.code === params.get('d')) ?? null
+const initial = params.get('d')
 const initialRegion = (REGIONS as string[]).includes(params.get('region') ?? '') ? (params.get('region') as Region) : null
 
 export function MapPage() {
-  const [selected, setSelected] = useState<District | null>(initial)
+  // 只記住區的代號：印章一變，區的進度會重算，要拿新的那份
+  const [selCode, setSelCode] = useState<string | null>(initial)
   const [region, setRegion] = useState<Region | null>(initialRegion)
-  const [detail, setDetail] = useState<District | null>(params.get('sheet') === 'district' ? initial : null)
-  const s = summary()
+  const [detailCode, setDetailCode] = useState<string | null>(params.get('sheet') === 'district' ? initial : null)
+  const districts = useDistricts()
+  const { stamps } = useStamps()
+  const selected = districts.find((d) => d.code === selCode) ?? null
+  const detail = districts.find((d) => d.code === detailCode) ?? null
+  const setSelected = useCallback((d: District | null) => setSelCode(d?.code ?? null), [])
+  const setDetail = useCallback((d: District | null) => setDetailCode(d?.code ?? null), [])
+  const s = summary(districts)
+  const latest = stamps.at(-1)
+  const hasTest = stamps.some((x) => x.test)
 
   const closeRegion = useCallback(() => setRegion(null), [])
-  const closeDetail = useCallback(() => setDetail(null), [])
+  const closeDetail = useCallback(() => setDetailCode(null), [])
 
   return (
     <>
@@ -33,7 +45,7 @@ export function MapPage() {
             <span className="eyebrow">遊歷護照 · 編號 0008</span>
             <h1 className="app-title">點亮香港</h1>
           </div>
-          {IS_DEMO && <span className="demo-badge">示範數據</span>}
+          {hasTest && <span className="demo-badge">含測試章</span>}
         </div>
         <dl className="passport-stats">
           <div>
@@ -53,11 +65,14 @@ export function MapPage() {
           <div>
             <dt>最近蓋章</dt>
             <dd>
-              11.17<small> 柴灣</small>
+              {latest ? monthDay(latest.at) : <small className="none">還沒蓋章</small>}
             </dd>
+            {latest && <dd className="stat-place">{SPOT_BY_ID[latest.spotId]?.area ?? latest.spotName}</dd>}
           </div>
         </dl>
       </header>
+
+      <InstallHint />
 
       <section className="map-block" aria-label="全港地圖">
         <HKMap selected={selected} onSelect={setSelected} onOpen={setDetail} />
@@ -74,7 +89,7 @@ export function MapPage() {
 
       <div className="region-tabs" role="group" aria-label="按地區看">
         {REGIONS.map((r) => {
-          const x = regionSummary(r)
+          const x = regionSummary(districts, r)
           return (
             <button key={r} type="button" className="region-tab" onClick={() => setRegion(r)}>
               <span className="region-name">{r}</span>

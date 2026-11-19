@@ -1,4 +1,4 @@
-import { DISTRICTS, REGIONS, label, regionSummary, type District, type Region } from '../lib/districts'
+import { REGIONS, label, regionSummary, useDistricts, type District, type Region } from '../lib/districts'
 import { Sheet } from './Sheet'
 import { Dots } from './Dots'
 
@@ -12,8 +12,9 @@ interface Props {
 /** 「港島 / 九龍 / 新界」分組：列出該組各區和進度 */
 export function RegionSheet({ region, onRegion, onClose, onPick }: Props) {
   const r = region ?? '港島'
-  const sum = regionSummary(r)
-  const list = DISTRICTS.filter((d) => d.region === r)
+  const districts = useDistricts()
+  const sum = regionSummary(districts, r)
+  const list = districts.filter((d) => d.region === r)
   return (
     <Sheet open={region !== null} label={`${r}各區`} onClose={onClose}>
       <div className="sheet-head">

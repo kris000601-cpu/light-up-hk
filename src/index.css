@@ -655,3 +655,263 @@ button {
     animation-duration: 1ms !important;
   }
 }
+
+/* ---------- 加到主畫面提示 ---------- */
+.install-hint {
+  margin: 14px 0 0;
+  padding: 12px 12px 12px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--card);
+  border: 1px solid var(--navy);
+  border-radius: 12px;
+}
+
+.install-hint-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.install-hint-text b {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--navy);
+}
+
+.install-hint-text p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+.install-hint .btn-primary {
+  margin-top: 10px;
+}
+
+.install-hint-close {
+  flex: none;
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.install-steps {
+  color: var(--ink) !important;
+}
+
+.inline-icon {
+  vertical-align: -2px;
+  color: var(--navy);
+}
+
+/* ---------- 按鈕 ---------- */
+.btn-primary,
+.btn-outline,
+.btn-small {
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid var(--navy);
+}
+
+.btn-primary {
+  padding: 7px 16px;
+  font-size: 14px;
+  background: var(--navy);
+  color: var(--card);
+}
+
+.btn-outline {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px;
+  font-size: 14px;
+  background: none;
+  color: var(--navy);
+}
+
+.btn-small {
+  flex: none;
+  padding: 3px 10px;
+  font-size: 12px;
+  background: var(--card);
+  color: var(--navy);
+}
+
+.btn-text {
+  display: block;
+  margin: 10px auto 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+button:disabled {
+  opacity: 0.45;
+}
+
+/* ---------- 「我的」頁 ---------- */
+.card-block {
+  margin: 18px 0 0;
+  padding: 14px 16px 16px;
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+}
+
+.block-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.block-text {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.block-text b {
+  font-family: var(--font-serif);
+  font-size: 17px;
+}
+
+.warn {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--seal-text);
+}
+
+.status-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--hair);
+}
+
+.status-list li {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hair);
+  font-size: 14px;
+}
+
+.status-list li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.status-list .install-steps {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.status-list .btn-primary {
+  align-self: flex-start;
+}
+
+.status {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--hair);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.status.ok {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: var(--card);
+}
+
+.status-note,
+.fine {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.fine {
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.version {
+  margin: 28px 0 8px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--sub);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.passport-stats dd small.none {
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+/* ---------- 測試工具 ---------- */
+.test-tools {
+  border-style: dashed;
+  border-color: var(--navy);
+}
+
+.select {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+}
+
+.test-spots {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.test-spots li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--hair);
+  font-size: 14px;
+}
+
+.test-spots small {
+  color: var(--sub);
+}
+
+/* 「最近蓋章」的地名放在日期下面一行，太長才用「…」收尾 */
+.passport-stats dd.stat-place {
+  margin: 1px 0 0;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

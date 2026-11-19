@@ -1,5 +1,5 @@
 import { useId, useMemo, useRef, type CSSProperties } from 'react'
-import { DISTRICTS, MAP_H, MAP_W, label, type District } from '../lib/districts'
+import { MAP_H, MAP_W, label, useDistricts, type District } from '../lib/districts'
 import { useMapZoom } from '../lib/useMapZoom'
 
 // 三墨規則：進度 = 墨藍深淺，集齊才用印泥紅
@@ -15,14 +15,15 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
   const clipId = useId()
   const boxRef = useRef<HTMLDivElement>(null)
   const { view, base, zoomed, fade, reset } = useMapZoom(boxRef, MAP_W, MAP_H)
-  const lit = DISTRICTS.filter((d) => d.visited > 0).length
+  const districts = useDistricts()
+  const lit = districts.filter((d) => d.visited > 0).length
 
   // 地圖內容只在選中的區改變時才重建；手指移動時不碰它，只改下面的 transform
   const content = useMemo(
     () => (
       <>
         <g className="hkmap-districts">
-          {DISTRICTS.map((d) => (
+          {districts.map((d) => (
             <path
               key={d.code}
               d={d.d}
@@ -48,7 +49,7 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
         )}
       </>
     ),
-    [selected, onSelect, clipId],
+    [districts, selected, onSelect, clipId],
   )
 
   // 手指移動中：SVG 仍按 base 畫好不動，用顯卡把它平移 / 縮放到 view 的位置

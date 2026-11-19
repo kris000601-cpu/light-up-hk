@@ -1,0 +1,138 @@
+import { useRef, useState } from 'react'
+import { InstallSteps } from '../components/InstallHint'
+import { label, useDistricts } from '../lib/districts'
+import { monthDay } from '../lib/format'
+import { platform } from '../lib/install'
+import { addStamp, clearTestStamps, usePersist, useStamps } from '../lib/stamps'
+import { setTestMode, useTestMode } from '../lib/testMode'
+
+const VERSION = '0.2'
+
+export function MePage() {
+  const { stamps, error } = useStamps()
+  const persist = usePersist()
+  const test = useTestMode()
+  const installed = platform() === 'installed'
+  const real = stamps.filter((s) => !s.test).length
+
+  // 連按版本號 5 下（2 秒內）開關測試模式
+  const taps = useRef<number[]>([])
+  const onVersionTap = () => {
+    const now = Date.now()
+    taps.current = [...taps.current.filter((t) => now - t < 2000), now]
+    if (taps.current.length >= 5) {
+      taps.current = []
+      setTestMode(!test)
+    }
+  }
+
+  return (
+    <>
+      <h1 className="app-title">我的</h1>
+
+      <section className="card-block" aria-labelledby="save-title">
+        <h2 id="save-title" className="block-title">
+          印章保存
+        </h2>
+        {error ? (
+          <p className="warn">{error}</p>
+        ) : (
+          <p className="block-text">
+            印章只存在這部手機裏，現在共 <b>{real}</b> 枚
+            {stamps.length > real && `（另有測試章 ${stamps.length - real} 枚）`}。
+          </p>
+        )}
+        <ul className="status-list">
+          <li>
+            <span className={installed ? 'status ok' : 'status'}>{installed ? '✓' : '·'}</span>
+            <span>
+              <b>{installed ? '已從主畫面打開' : '還沒加到主畫面'}</b>
+              {!installed && <InstallSteps />}
+            </span>
+          </li>
+          <li>
+            <span className={persist === 'yes' ? 'status ok' : 'status'}>{persist === 'yes' ? '✓' : '·'}</span>
+            <span>
+              <b>{persist === 'yes' ? '已鎖定，瀏覽器不會自動清走' : '還沒鎖定'}</b>
+              {persist !== 'yes' && (
+                <span className="status-note">
+                  {persist === 'unsupported' ? '這個瀏覽器不支援。' : '蓋第一個章時會自動申請；加到主畫面後比較容易批准。'}
+                </span>
+              )}
+            </span>
+          </li>
+        </ul>
+        <p className="fine">換手機、或在設定裏清除瀏覽器資料，印章會不見。之後會加備份功能。</p>
+      </section>
+
+      {test && <TestTools />}
+
+      <p className="version" onClick={onVersionTap}>
+        點亮香港 · 版本 {VERSION}
+        {test && ' · 測試模式'}
+      </p>
+    </>
+  )
+}
+
+/** 測試工具：不用到現場也可以蓋章，看首頁和印章冊的效果 */
+function TestTools() {
+  const districts = useDistricts()
+  const { stamps } = useStamps()
+  const [code, setCode] = useState(districts[0].code)
+  const [busy, setBusy] = useState(false)
+  const d = districts.find((x) => x.code === code) ?? districts[0]
+  const tests = stamps.filter((s) => s.test).length
+
+  const run = async (f: () => Promise<unknown>) => {
+    setBusy(true)
+    try {
+      await f()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="card-block test-tools" aria-labelledby="test-title">
+      <h2 id="test-title" className="block-title">
+        測試工具
+      </h2>
+      <p className="block-text">不用到現場，直接蓋一個「測試章」。測試章會算進地圖進度，可以一鍵清走。</p>
+      <select className="select" value={code} onChange={(e) => setCode(e.target.value)} aria-label="選區">
+        {districts.map((x) => (
+          <option key={x.code} value={x.code}>
+            {label(x)}（{x.visited} / {x.total}）
+          </option>
+        ))}
+      </select>
+      <ul className="test-spots">
+        {d.spots.map((s) => {
+          const st = d.done[s.id]
+          return (
+            <li key={s.id}>
+              <span>
+                {s.name}
+                {st && <small> · {monthDay(st.at)}{st.test ? ' 測試' : ''}</small>}
+              </span>
+              <button
+                type="button"
+                className="btn-small"
+                disabled={busy}
+                onClick={() => run(() => addStamp({ spotId: s.id, spotName: s.name, district: s.district, test: true }))}
+              >
+                蓋測試章
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      <button type="button" className="btn-outline" disabled={busy || !tests} onClick={() => run(clearTestStamps)}>
+        清走全部測試章（{tests} 枚）
+      </button>
+      <button type="button" className="btn-text" onClick={() => setTestMode(false)}>
+        關閉測試工具
+      </button>
+    </section>
+  )
+}
