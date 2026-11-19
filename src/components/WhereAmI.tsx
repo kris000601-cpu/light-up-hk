@@ -188,7 +188,7 @@ export function WhereAmI() {
           {nearby.length > 0 && (
             <section className="nearby" aria-label="附近可蓋章">
               <span className="nearby-head">附近可蓋章{nearby.length > 1 ? ` · ${nearby.length} 個` : ''}</span>
-              {nearby.map(({ spot, d }) => {
+              {nearby.map(({ spot }) => {
                 const last = lastBySpot[spot.id]
                 const just = stamped?.spotId === spot.id
                 return (
@@ -196,7 +196,7 @@ export function WhereAmI() {
                     <div className="nearby-text">
                       <span className="nearby-name">{spot.name}</span>
                       <span className="nearby-meta">
-                        {spot.area} · {spot.district} · {d < 1 ? '就在這裏' : `${formatDistance(d).num} ${formatDistance(d).unit}`}
+                        {spot.area} · {spot.district}
                         {last && !just && ` · ${monthDay(last.at)} 蓋過`}
                       </span>
                     </div>
@@ -264,11 +264,11 @@ function Ticket({ item, fix, code, districtLabel }: { item: Scored; fix: Fix; co
   const to = navTarget(fix.lat, fix.lng, spot)
   const href = `https://www.google.com/maps/dir/?api=1&destination=${to.lat.toFixed(5)},${to.lng.toFixed(5)}`
   return (
-    <a className="ticket" href={href} target="_blank" rel="noopener" aria-label={`下一站：${districtLabel}${spot.name}，${spot.tip}，${dist.num} ${dist.unit}，用 Google 地圖導航`}>
+    <a className="ticket" href={href} target="_blank" rel="noopener" aria-label={`下一站：${districtLabel}${spot.name}，${spot.tip}，還差 ${dist.num} ${dist.unit}就可以蓋章，用 Google 地圖導航`}>
       <div className="ticket-main">
         <div className="ticket-top">
           <span className="ticket-title">下一站</span>
-          <span className="ticket-note">離你最近、未蓋章的景點 · 按下導航</span>
+          <span className="ticket-note">走到就可以蓋 · 按下導航</span>
         </div>
         <div className="ticket-band">
           <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">
@@ -282,6 +282,7 @@ function Ticket({ item, fix, code, districtLabel }: { item: Scored; fix: Fix; co
       </div>
       <div className="ticket-perf" aria-hidden="true" />
       <div className="ticket-stub">
+        <span className="ticket-unit">還差</span>
         <span className="ticket-num">{dist.num}</span>
         <span className="ticket-unit">{dist.unit}</span>
         <span className="ticket-code">
