@@ -23,6 +23,10 @@ export interface Stamp {
   acc?: number
   /** 測試模式蓋的章：只在測試模式開着時才算進進度，可以一鍵清走 */
   test?: boolean
+  /** 章蓋在紙上的位置（紙面寬高的比例 0–1）和角度（度）；印章冊照着重現 */
+  px?: number
+  py?: number
+  rot?: number
 }
 
 export type NewStamp = Omit<Stamp, 'id' | 'uid' | 'no' | 'at'>

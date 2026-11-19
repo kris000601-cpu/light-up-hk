@@ -6,7 +6,7 @@ import { platform } from '../lib/install'
 import { addStamp, clearTestStamps, usePersist, useStamps } from '../lib/stamps'
 import { setFakeLocation, setTestMode, useFakeLocation, useTestMode } from '../lib/testMode'
 
-const VERSION = '0.3'
+const VERSION = '0.4'
 
 export function MePage() {
   const { stamps, error } = useStamps()

@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { SPOTS, label, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { platform } from '../lib/install'
 import { ACC_LIMIT, FIX_TTL, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
 import { metresToRange, nearestOnShape, navTarget } from '../lib/range'
-import { addStamp, useStamps, type Stamp } from '../lib/stamps'
+import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation, setFakeLocation, useFakeLocation } from '../lib/testMode'
 import { InstallSteps } from './InstallHint'
 import { Sheet } from './Sheet'
+import { StampPage } from './StampPage'
 
 type Status =
   | { k: 'idle'; expired?: boolean }
@@ -64,7 +65,7 @@ const needsBrowserWarning = () => {
 export function WhereAmI() {
   const [status, setStatus] = useState<Status>({ k: 'idle' })
   const [stamped, setStamped] = useState<Stamp | null>(null)
-  const [saveError, setSaveError] = useState(false)
+  const [stampAt, setStampAt] = useState<{ spot: Spot; d: number } | null>(null)
   const [warnFor, setWarnFor] = useState<Spot | null>(null)
   const fake = useFakeLocation()
   const counted = useCountedStamps()
@@ -91,7 +92,6 @@ export function WhereAmI() {
 
   const run = async () => {
     setStamped(null)
-    setSaveError(false)
     const f = getFakeLocation()
     if (f) {
       setStatus({ k: 'done', fix: { lat: f.lat, lng: f.lng, acc: f.acc, at: Date.now(), fake: true } })
@@ -126,7 +126,10 @@ export function WhereAmI() {
     return { nearby: near, almost: close, next: far[0] ?? null }
   }, [fix, accurate, doneIds])
 
-  const stamp = async (spot: Spot, confirmed = false) => {
+  const closeStamp = useCallback(() => setStampAt(null), [])
+
+  // 按「蓋章」：先檢查位置還有效、瀏覽器提醒，然後打開蓋章頁（真正存章在蓋章頁壓到底那一下）
+  const stamp = (spot: Spot, confirmed = false) => {
     if (!fix) return
     if (Date.now() - fix.at > FIX_TTL) {
       setStatus({ k: 'idle', expired: true })
@@ -136,22 +139,7 @@ export function WhereAmI() {
       setWarnFor(spot)
       return
     }
-    setSaveError(false)
-    try {
-      // ⚠️ 第 4 步會換成蓋章頁（按住紙面的鋼印動畫）；現在先直接存
-      const st = await addStamp({
-        spotId: spot.id,
-        spotName: spot.name,
-        district: spot.district,
-        lat: fix.lat,
-        lng: fix.lng,
-        acc: fix.acc,
-        ...(fix.fake ? { test: true } : {}),
-      })
-      setStamped(st)
-    } catch {
-      setSaveError(true)
-    }
+    setStampAt({ spot, d: nearby.find((x) => x.spot.id === spot.id)?.d ?? 0 })
   }
 
   return (
@@ -225,7 +213,6 @@ export function WhereAmI() {
                   </div>
                 )
               })}
-              {saveError && <p className="where-warn">存不進手機，請再按一次「蓋章」。</p>}
             </section>
           )}
 
@@ -253,6 +240,16 @@ export function WhereAmI() {
 
           {next && <Ticket item={next} fix={fix!} code={codeOf[next.spot.district]?.code ?? ''} districtLabel={codeOf[next.spot.district] ? label(codeOf[next.spot.district]) : next.spot.district} />}
         </>
+      )}
+
+      {stampAt && fix && (
+        <StampPage
+          spot={stampAt.spot}
+          fix={fix}
+          distance={stampAt.d}
+          onClose={closeStamp}
+          onSaved={setStamped}
+        />
       )}
 
       <Sheet open={warnFor !== null} label="先加到主畫面？" onClose={() => setWarnFor(null)}>
