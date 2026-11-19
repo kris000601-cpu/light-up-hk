@@ -3,6 +3,7 @@ import { HKMap } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
 import { InstallHint } from '../components/InstallHint'
+import { WhereAmI } from '../components/WhereAmI'
 import { REGIONS, SPOT_BY_ID, regionSummary, summary, useCountedStamps, useDistricts, type District, type Region } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { reloadStamps, useStamps } from '../lib/stamps'
@@ -110,6 +111,8 @@ export function MapPage() {
           )
         })}
       </div>
+
+      <WhereAmI />
 
       <p className="credit">
         區界：民政事務總署（DATA.GOV.HK）；海岸線、景點範圍：

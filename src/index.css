@@ -939,3 +939,354 @@ button:disabled {
   line-height: 1.6;
   color: var(--seal-text);
 }
+
+/* ---------- 我在哪 ---------- */
+.where {
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.where-card {
+  padding: 12px 12px 12px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--card);
+  border: 1.5px dashed var(--navy);
+  border-radius: 12px;
+}
+
+.where-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.where-text b {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: 1px;
+  color: var(--navy);
+}
+
+.where-text p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+.where-btn {
+  flex: none;
+  min-height: 44px;
+}
+
+.where-status,
+.where-none,
+.fake-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.fake-note {
+  padding: 5px 10px;
+  border: 1px dashed var(--navy);
+  border-radius: 8px;
+}
+
+.where-warn {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--seal-text);
+}
+
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* 附近可蓋章（印泥紅只用在這裏和蓋章按鈕） */
+.nearby {
+  padding: 10px 12px 10px 16px;
+  background: var(--card);
+  border: 1.5px dashed var(--navy);
+  border-radius: 12px;
+}
+
+.nearby-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--seal-text);
+}
+
+.nearby-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.nearby-row + .nearby-row {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--hair);
+}
+
+.nearby-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nearby-name {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: 1px;
+  line-height: 1.3;
+}
+
+.nearby-meta {
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.btn-seal {
+  flex: none;
+  width: 66px;
+  height: 52px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--seal);
+  color: var(--card);
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 2px;
+  box-shadow: inset 0 0 0 3px var(--seal), inset 0 0 0 4px #f0c2b9;
+}
+
+.btn-seal:active {
+  transform: translateY(1px);
+}
+
+.nearby-done {
+  flex: none;
+  width: 66px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 14px;
+  color: var(--seal-text);
+}
+
+.nearby-done small {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--sub);
+}
+
+/* 下一站票根（護照配色，保留 1979 單程票的結構） */
+.ticket {
+  position: relative;
+  display: flex;
+  min-height: 104px;
+  border: 1.5px solid var(--navy);
+  border-radius: 12px;
+  background: repeating-linear-gradient(135deg, rgba(45, 62, 92, 0.05) 0 1px, transparent 1px 5px), var(--card);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.ticket-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 12px;
+}
+
+.ticket-top {
+  padding: 9px 14px 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ticket-title {
+  flex: none;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--navy);
+}
+
+.ticket-note {
+  min-width: 0;
+  font-size: 10px;
+  color: var(--sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-band {
+  margin-top: 7px;
+  height: 34px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid var(--navy);
+  border-bottom: 1px solid var(--navy);
+  box-shadow: inset 0 2px 0 var(--card), inset 0 3px 0 var(--navy), inset 0 -2px 0 var(--card), inset 0 -3px 0 var(--navy);
+  background: var(--card);
+  color: var(--navy);
+}
+
+.ticket-band svg {
+  flex: none;
+}
+
+.ticket-name {
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: 2px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-district {
+  flex: none;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--sub);
+}
+
+.ticket-tip {
+  padding: 7px 14px 0 30px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--sub);
+}
+
+.ticket-hole {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--navy);
+}
+
+.ticket-perf {
+  margin: 12px 0;
+  border-left: 1.5px dashed rgba(45, 62, 92, 0.45);
+}
+
+.ticket-stub {
+  flex: none;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.ticket-num {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 28px;
+  line-height: 1;
+  color: var(--navy);
+}
+
+.ticket-unit {
+  font-size: 11px;
+  color: var(--sub);
+}
+
+.ticket-code {
+  margin-top: 6px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--sub);
+}
+
+.ticket-notch {
+  position: absolute;
+  right: 80.5px;
+  width: 15px;
+  height: 8px;
+  background: var(--paper);
+  border: 1.5px solid var(--navy);
+}
+
+.ticket-notch.top {
+  top: -1.5px;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+
+.ticket-notch.bottom {
+  bottom: -1.5px;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+}
+
+/* 瀏覽器裏第一次蓋章前的提醒 */
+.warn-body {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.warn-actions {
+  margin-top: 6px;
+}
+
+/* 測試工具：假位置 */
+.acc-pick {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.acc-pick .select {
+  margin-top: 4px;
+}
+
+.test-btns {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}
+
+.test-tools .fake-note {
+  margin-top: 8px;
+}

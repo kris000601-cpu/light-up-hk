@@ -4,9 +4,9 @@ import { label, useDistricts } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { platform } from '../lib/install'
 import { addStamp, clearTestStamps, usePersist, useStamps } from '../lib/stamps'
-import { setTestMode, useTestMode } from '../lib/testMode'
+import { setFakeLocation, setTestMode, useFakeLocation, useTestMode } from '../lib/testMode'
 
-const VERSION = '0.2'
+const VERSION = '0.3'
 
 export function MePage() {
   const { stamps, error } = useStamps()
@@ -81,6 +81,8 @@ function TestTools() {
   const { stamps } = useStamps()
   const [code, setCode] = useState(districts[0].code)
   const [busy, setBusy] = useState(false)
+  const [acc, setAcc] = useState(15)
+  const fake = useFakeLocation()
   const d = districts.find((x) => x.code === code) ?? districts[0]
   const tests = stamps.filter((s) => s.test).length
 
@@ -98,7 +100,25 @@ function TestTools() {
       <h2 id="test-title" className="block-title">
         測試工具
       </h2>
-      <p className="block-text">不用到現場，直接蓋一個「測試章」。測試章會算進地圖進度，可以一鍵清走。</p>
+      <p className="block-text">
+        「假裝在這」：回到地圖按「讀取位置」，就當你人在那個景點（不讀 GPS），可以試「附近可蓋章」和「下一站」。「蓋測試章」：直接蓋，不用定位。測試章只在測試模式開着時算進進度，可以一鍵清走。
+      </p>
+      {fake && (
+        <p className="fake-note">
+          現在假裝在「{fake.label}」，誤差 {fake.acc} 米 ·{' '}
+          <button type="button" className="link" onClick={() => setFakeLocation(null)}>
+            取消
+          </button>
+        </p>
+      )}
+      <label className="acc-pick">
+        假裝的定位誤差
+        <select className="select" value={acc} onChange={(e) => setAcc(Number(e.target.value))}>
+          <option value={15}>15 米（很準）</option>
+          <option value={90}>90 米（一般）</option>
+          <option value={400}>400 米（太差，不給蓋）</option>
+        </select>
+      </label>
       <select className="select" value={code} onChange={(e) => setCode(e.target.value)} aria-label="選區">
         {districts.map((x) => (
           <option key={x.code} value={x.code}>
@@ -115,6 +135,10 @@ function TestTools() {
                 {s.name}
                 {st && <small> · {monthDay(st.at)}{st.test ? ' 測試' : ''}</small>}
               </span>
+              <span className="test-btns">
+              <button type="button" className="btn-small" onClick={() => setFakeLocation({ lat: s.lat, lng: s.lng, acc, label: s.name })}>
+                假裝在這
+              </button>
               <button
                 type="button"
                 className="btn-small"
@@ -123,6 +147,7 @@ function TestTools() {
               >
                 蓋測試章
               </button>
+              </span>
             </li>
           )
         })}
