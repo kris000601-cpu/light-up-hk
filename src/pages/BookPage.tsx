@@ -38,7 +38,7 @@ function EmptyBook() {
       </header>
       <div className="book-empty">
         <EmptyOct width={150} mark="" />
-        <p>還沒有章。到了景點，在地圖頁按「我在哪」，就可以蓋第一個章。</p>
+        <p>還沒有章。到了景點，在「蓋章」頁按一下中間的點，就可以蓋第一個章。</p>
       </div>
     </>
   )

@@ -1,4 +1,4 @@
-// 首頁（2026-11-20 原型，網址 ?home=a）
+// 首頁「蓋章」（2026-11-20 Chris 定稿，取代舊的「我在哪」卡片）
 //
 // 一打開是一張空白的紙：正中只有一點，波紋一圈圈往外擴散，沒有字、沒有導航。
 // 按一下 → 讀位置（波紋變快）→ 一圈波紋慢慢掃出去，最近的 10 個景點的長條章（只有字）
@@ -14,9 +14,9 @@ import { navToSpot } from '../lib/where'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation } from '../lib/testMode'
+import { platform } from '../lib/install'
 import { StampPage } from '../components/StampPage'
 import { BrowserWarnSheet, needsBrowserWarning } from '../components/BrowserWarn'
-import { ERROR_TEXT, deniedText } from '../components/WhereAmI'
 
 type State =
   | { k: 'idle'; expired?: boolean }
@@ -27,7 +27,7 @@ type State =
 const params = new URLSearchParams(window.location.search)
 const MOCK = params.get('mock') === '1'
 
-/** 試用：?home=a&at=s026（假裝在某景點）或 &at=22.3076,114.2598（假裝在某處）。假位置蓋的章一律是測試章。 */
+/** 試用：?at=s026（假裝在某景點）或 ?at=22.3076,114.2598（假裝在某處）。假位置蓋的章一律是測試章。 */
 function demoAt(): { lat: number; lng: number } | null {
   const v = params.get('at')
   if (!v) return null
@@ -56,6 +56,20 @@ const dist = (m: number) => {
   return `${f.num} ${f.unit}`
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/** 讀不到位置時，正中下面寫的原因 */
+const ERROR_TEXT: Record<LocateError, string> = {
+  denied: '',
+  unavailable: '讀不到位置。請確認手機已開啟定位服務，再試一次。',
+  timeout: '定位太久沒有結果。走到比較空曠的地方，再試一次。',
+  unsupported: '這個瀏覽器不支援定位，請改用 Safari 或 Chrome。',
+}
+function deniedText() {
+  const p = platform()
+  if (p === 'ios' || (p === 'installed' && /iPhone|iPad/.test(navigator.userAgent)))
+    return '沒有定位權限。請到 iPhone「設定」→「私隱與安全性」→「定位服務」，確認已開啟，並允許 Safari 網站使用位置，然後回來再按一次。'
+  return '沒有定位權限。請按網址列左邊的圖示（或手機「設定」→「應用程式」→ 瀏覽器 →「權限」），允許使用「位置」，然後再按一次。'
+}
 const reduceMotion = () => MOCK || (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
 
 /** 正中那個東西佔多大（推開別的章用）：可以蓋的大章連上下兩行字；或者只是你的位置點 */

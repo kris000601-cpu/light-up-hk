@@ -134,7 +134,7 @@ export function PageBody({ name, area, district, stamps }: { name: string; area?
           {n === 0 && (
             <span className="pv-empty">
               <EmptyOct width={150} />
-              <span>到了這裏，按「我在哪」就可以蓋章</span>
+              <span>到了這裏，在「蓋章」頁按一下中間的點就可以蓋章</span>
             </span>
           )}
         </BookPaper>

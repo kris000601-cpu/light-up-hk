@@ -45,11 +45,11 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   },
 ]
 
-/** items：顯示哪幾格（預設地圖 / 印章冊 / 我的）；hidden：新首頁剛打開時先藏起來（仍然佔位，浮現時版面不跳） */
-export function TabBar({ current, onChange, items = ['map', 'book', 'me'], hidden }: { current: Tab; onChange: (tab: Tab) => void; items?: Tab[]; hidden?: boolean }) {
+/** 底部四格「蓋章 · 地圖 · 印章冊 · 我的」（導航方案二，Chris 2026-11-20 選定）。hidden：首頁剛打開時先藏起來（仍然佔位，浮現時版面不跳） */
+export function TabBar({ current, onChange, hidden }: { current: Tab; onChange: (tab: Tab) => void; hidden?: boolean }) {
   return (
-    <nav className={hidden ? 'tabbar off' : 'tabbar'} inert={hidden} style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
-      {TABS.filter((t) => items.includes(t.id)).map((t) => (
+    <nav className={hidden ? 'tabbar off' : 'tabbar'} inert={hidden}>
+      {TABS.map((t) => (
         <button
           key={t.id}
           type="button"

@@ -1,5 +1,4 @@
 // iPhone Safari / App 內置瀏覽器裏，第一次正式蓋章前提醒：這裏的章和主畫面 App 是分開存的。
-// 首頁和舊的「我在哪」卡片共用。
 import { platform } from '../lib/install'
 import { InstallSteps } from './InstallHint'
 import { Sheet } from './Sheet'
