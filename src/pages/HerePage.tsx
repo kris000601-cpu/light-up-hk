@@ -1,16 +1,17 @@
 // 首頁「蓋章」（2026-11-20 Chris 定稿，取代舊的「我在哪」卡片）
 //
 // 一打開是一張空白的紙：正中只有一點，波紋一圈圈往外擴散，沒有字、沒有導航。
-// 按一下 → 讀位置（波紋變快）→ 一圈波紋慢慢掃出去，最近的 10 個景點的長條章（只有字）
+// 按一下 → 讀位置（波紋變快；第一個能用的位置一到，約 1 秒，就出結果，之後在原地悄悄變準）→ 一圈波紋慢慢掃出去，最近的 10 個景點的長條章（只有字）
 // 在原地慢慢浮現，像雷達找到東西：方向是真的（上北下南），離中心越遠 = 實際越遠，近的先出現。同時抬頭（收集進度）和底部導航一起浮現。
 // 已經在範圍裏的那個景點落在正中（大一號的實心紅章），亮一圈印泥紅，按它蓋章。讀位置失敗也一樣浮現，正中寫原因。
 // 定位只在按的那一下讀一次，不在背景追蹤。
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SPOT_BY_ID, label, summary, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { monthDay } from '../lib/format'
-import { FIX_TTL, SETTLE, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
-import { SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
+import { FIX_TTL, SETTLE, formatDistance, startLocate, type Fix, type LocateError, type LocateHandlers } from '../lib/locate'
+import { RADAR_N, SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
 import { navToSpot } from '../lib/where'
+import { distance } from '../lib/range'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation } from '../lib/testMode'
@@ -37,6 +38,21 @@ function demoAt(): { lat: number; lng: number } | null {
 }
 const DEMO = demoAt()
 
+/** 假位置也照真的定位那樣交結果：約 0.9 秒先交一個粗的（60 米），1.4 秒後變準（12 米） */
+function fakeLocate(at: { lat: number; lng: number }, h: LocateHandlers): () => void {
+  const fix = (acc: number): Fix => ({ lat: at.lat, lng: at.lng, acc, at: Date.now(), fake: true })
+  const t1 = setTimeout(() => h.onFix(fix(60)), 900)
+  const t2 = setTimeout(() => {
+    const best = fix(12)
+    h.onFix(best)
+    h.onDone(best)
+  }, 2300)
+  return () => {
+    clearTimeout(t1)
+    clearTimeout(t2)
+  }
+}
+
 /** 設計稿截圖：?mock=1&here=locating / here=done&lat=..&lng=..（或 &spot=s026）/ here=error */
 function mockState(): State {
   const h = MOCK ? params.get('here') : null
@@ -55,7 +71,6 @@ const dist = (m: number) => {
   const f = formatDistance(m)
   return `${f.num} ${f.unit}`
 }
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 /** 讀不到位置時，正中下面寫的原因 */
 const ERROR_TEXT: Record<LocateError, string> = {
@@ -114,7 +129,17 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const [warnFor, setWarnFor] = useState<RadarSpot | null>(null)
   const [just, setJust] = useState<Stamp | null>(null)
   const [round, setRound] = useState(0) // 每讀一次位置 +1：重播散開的動畫
-  const [slow, setSlow] = useState(false) // 定位超過 4.5 秒還沒好：正中下面說一句，免得以為卡住了
+  const [slow, setSlow] = useState(false) // 定位超過 4.5 秒還沒有結果：正中下面說一句，免得以為卡住了
+  const [refining, setRefining] = useState(false) // 已經出了結果，同一次按壓裏還在變準
+  // 排位置用的那個位置：第一次出結果時定下；之後變準只更新顏色和距離，章留在原位不跳，
+  // 只有正中換了（例如變準之後發現你已經到了）、或者位置挪了超過 50 米才重排
+  const [basis, setBasis] = useState<{ fix: Fix; centerId: string | null } | null>(() => {
+    const st = mockState()
+    return st.k === 'done' ? { fix: st.fix, centerId: null } : null
+  })
+  // 這一次按壓裏已經算「到了」的景點（變準之後照樣算，見 radarSpots）
+  const arrivedRef = useRef(new Set<string>())
+  const cancelRef = useRef<(() => void) | null>(null)
   const districts = useDistricts()
   const counted = useCountedStamps()
   const { ready, stamps } = useStamps()
@@ -149,43 +174,78 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   }, [])
 
   const fix = state.k === 'done' ? state.fix : null
-  const data = useMemo(() => (fix ? radarSpots(fix) : null), [fix])
-  const center = data?.center ?? null
-  const atBox = center ? centerAt(center.spot) : null
-  const layout = useMemo(() => (data ? layoutRadar(data, pad.w, pad.h, data.center ? centerAt(data.center.spot) : CENTER_ME) : null), [data, pad])
-  const selected = layout?.placed.find((p) => p.spot.id === sel) ?? null
+  // 最新（最準）的位置：顏色、距離、能不能蓋都跟它
+  // （arrivedRef 在交位置時 onFix 裏已經更新好，所以只跟 fix）
+  const data = useMemo(() => (fix ? radarSpots(fix, RADAR_N, arrivedRef.current) : null), [fix])
+  const live = useMemo(() => new Map([data?.center, ...(data?.around ?? [])].filter((x): x is RadarSpot => !!x).map((x) => [x.spot.id, x])), [data])
+  const liveOf = (p: RadarSpot) => live.get(p.spot.id) ?? p
+  // 排位置的那一份
+  const geo = useMemo(() => (basis ? radarSpots(basis.fix, RADAR_N, arrivedRef.current) : null), [basis])
+  const layout = useMemo(() => (geo ? layoutRadar(geo, pad.w, pad.h, geo.center ? centerAt(geo.center.spot) : CENTER_ME) : null), [geo, pad])
+  const center = geo?.center ? liveOf(geo.center) : null
+  const atBox = geo?.center ? centerAt(geo.center.spot) : null
+  const selectedP = layout?.placed.find((p) => p.spot.id === sel) ?? null
+  const selected = selectedP ? liveOf(selectedP) : null
 
-  const run = useCallback(async () => {
+  const run = useCallback(() => {
+    cancelRef.current?.()
+    arrivedRef.current = new Set()
     setSel(null)
     setJust(null)
+    setBasis(null)
+    setRefining(false)
     setState({ k: 'locating' })
     setSlow(false)
     const slowTimer = setTimeout(() => setSlow(true), SETTLE + 500)
-    const fake = DEMO ?? getFakeLocation()
-    let next: State
-    if (fake) {
-      // 假位置：照樣等一下（跟真的定位差不多久），看得到整個流程
-      await sleep(1750)
-      next = { k: 'done', fix: { lat: fake.lat, lng: fake.lng, acc: 12, at: Date.now(), fake: true } }
-    } else {
-      try {
-        next = { k: 'done', fix: await locate() }
-      } catch (err) {
-        next = { k: 'error', err: err as LocateError }
-      }
+    let first = true
+    const handlers: LocateHandlers = {
+      onFix: (f) => {
+        const d = radarSpots(f, RADAR_N, arrivedRef.current)
+        for (const x of [d.center, ...d.around]) if (x?.can) arrivedRef.current.add(x.spot.id)
+        const centerId = d.center?.spot.id ?? null
+        setState({ k: 'done', fix: f })
+        // 章留在原位，除非正中換了、或者位置挪了超過 50 米（第一個位置偏得遠）：那就重排，章慢慢滑到新位置
+        setBasis((b) => (b && b.centerId === centerId && distance(b.fix.lat, b.fix.lng, f.lat, f.lng) <= 50 ? b : { fix: f, centerId }))
+        if (first) {
+          first = false
+          clearTimeout(slowTimer)
+          setSlow(false)
+          setRefining(true)
+          setRound((r) => r + 1)
+          onReveal() // 抬頭和導航一起浮現
+        }
+      },
+      onDone: () => {
+        cancelRef.current = null
+        setRefining(false)
+      },
+      onError: (err) => {
+        cancelRef.current = null
+        clearTimeout(slowTimer)
+        setSlow(false)
+        setState({ k: 'error', err })
+        setRound((r) => r + 1)
+        onReveal() // 讀不到也一樣浮現
+      },
     }
-    clearTimeout(slowTimer)
-    setSlow(false)
-    setState(next)
-    setRound((r) => r + 1)
-    onReveal() // 不管成功還是失敗，抬頭和導航都浮現出來
+    const fake = DEMO ?? getFakeLocation()
+    const cancel = fake ? fakeLocate(fake, handlers) : startLocate(handlers)
+    cancelRef.current = () => {
+      cancel()
+      clearTimeout(slowTimer)
+    }
   }, [onReveal])
+  useEffect(() => () => cancelRef.current?.(), [])
 
   // 位置太舊就作廢（從後台回來、或者從別的分頁切回來時檢查），要再按一次
   useEffect(() => {
     const check = () => {
       if (document.visibilityState !== 'visible') return
-      setState((st) => (st.k === 'done' && !st.fix.fake && !MOCK && Date.now() - st.fix.at > FIX_TTL ? { k: 'idle', expired: true } : st))
+      setState((st) => {
+        if (st.k !== 'done' || st.fix.fake || MOCK || Date.now() - st.fix.at <= FIX_TTL) return st
+        cancelRef.current?.()
+        return { k: 'idle', expired: true }
+      })
     }
     if (active) check()
     document.addEventListener('visibilitychange', check)
@@ -278,20 +338,20 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
             </span>
           )}
 
-          {layout && (
+          {layout && k === 'done' && (
             <>
               <span className="sweep" style={{ left: -layout.R - 20, top: -layout.R - 20, width: layout.R * 2 + 40, height: layout.R * 2 + 40 }} aria-hidden="true" />
               <span className="north" style={{ top: -layout.R - 19 }} aria-hidden="true">
                 北
               </span>
               {layout.placed.map((p) => (
-                <RadarStamp key={p.spot.id} p={p} tone={tone(p)} selected={sel === p.spot.id} onClick={() => setSel(sel === p.spot.id ? null : p.spot.id)} />
+                <RadarStamp key={p.spot.id} p={p} live={liveOf(p)} tone={tone(liveOf(p))} selected={sel === p.spot.id} onClick={() => setSel(sel === p.spot.id ? null : p.spot.id)} />
               ))}
             </>
           )}
 
           {/* 正中：可以蓋的大章，或者你的位置點 */}
-          {center && fix && atBox ? (
+          {center && fix && atBox && k === 'done' ? (
             <button
               type="button"
               className="at"
@@ -370,7 +430,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
         {fix && (
           <>
             {fix.fake ? '假位置（試用）' : `${clock(fix.at)} 的位置`} · 誤差約 {fix.acc} 米
-            {data && !data.accurate && ' · 太大，暫時不能蓋章'} ·{' '}
+            {refining ? ' · 還在對準…' : data && !data.accurate && ' · 太大，暫時不能蓋章'} ·{' '}
             <button type="button" className="link" onClick={run}>
               重新定位
             </button>
@@ -392,15 +452,16 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   )
 }
 
-function RadarStamp({ p, tone, selected, onClick }: { p: Placed; tone: Tone; selected: boolean; onClick: () => void }) {
+/** p：位置（排版那一份）；live：最新位置算出來的能不能蓋、距離 */
+function RadarStamp({ p, live, tone, selected, onClick }: { p: Placed; live: RadarSpot; tone: Tone; selected: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
-      className={`rs rs-${tone}${p.almost ? ' rs-almost' : ''}${selected ? ' sel' : ''}`}
+      className={`rs rs-${tone}${live.almost ? ' rs-almost' : ''}${selected ? ' sel' : ''}`}
       style={{ left: Math.round(p.x - p.w / 2), top: Math.round(p.y - p.h / 2), width: p.w, height: p.h }}
       data-r={p.r}
       onClick={onClick}
-      aria-label={`${p.spot.name}，${p.can ? '在範圍裏，可以蓋章' : `距離 ${dist(p.d)}`}`}
+      aria-label={`${p.spot.name}，${live.can ? '在範圍裏，可以蓋章' : `距離 ${dist(live.d)}`}`}
     >
       <TextSeal name={shortName(p.spot.name)} font={p.font} tone={tone} w={p.w} h={p.h} />
     </button>

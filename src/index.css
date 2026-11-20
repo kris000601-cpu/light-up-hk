@@ -1899,6 +1899,10 @@ button.me:active .me-dot {
   position: absolute;
   z-index: 1;
   display: block;
+  /* 位置變準之後發現你到了：正中要騰出位置，旁邊的章慢慢滑開，不跳 */
+  transition:
+    left 0.6s ease,
+    top 0.6s ease;
   padding: 0;
   border: 0;
   background: none;
@@ -1921,6 +1925,10 @@ button.me:active .me-dot {
   position: absolute;
   inset: -8px;
   padding: 8px;
+}
+/* 位置變準之後才進來的章：淡淡浮出來（第一次出結果時，HerePage 用波紋掃到的時間另外做） */
+.rs .ink {
+  animation: fade-in 0.8s ease;
 }
 .tseal {
   display: flex;
@@ -1975,6 +1983,8 @@ button.me:active .me-dot {
 .at {
   position: absolute;
   z-index: 2;
+  /* 變準之後才發現到了：正中的大章淡淡浮出來 */
+  animation: fade-in 0.8s ease;
   padding: 0;
   border: 0;
   background: none;

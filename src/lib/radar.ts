@@ -40,14 +40,19 @@ const mLng = (lat: number) => 111320 * Math.cos((lat * Math.PI) / 180)
 const bearing = (fix: Pick<Fix, 'lat' | 'lng'>, p: { lat: number; lng: number }) =>
   Math.atan2((p.lng - fix.lng) * mLng(fix.lat), (p.lat - fix.lat) * M_LAT)
 
-export function radarSpots(fix: Fix, n = RADAR_N): RadarData {
+/**
+ * arrived：這一次按壓裏，之前讀到的位置已經算「到了」的景點。位置變準之後照樣算到了，
+ * 免得「你已到達」出現了又消失（每一個位置本身都已經符合蓋章的規則：誤差 ≤ 100 米、在範圍裏）。
+ */
+export function radarSpots(fix: Fix, n = RADAR_N, arrived?: ReadonlySet<string>): RadarData {
   const accurate = fix.acc <= ACC_LIMIT
   const all: RadarSpot[] = SPOTS.map((spot) => {
     const near = nearestOnShape(fix.lat, fix.lng, spot)
     const gap = metresToRange(fix.lat, fix.lng, fix.acc, spot)
     // 在範圍裏面時，「最近的一點」就是你自己，看不出方向 → 用景點本身的座標
     const toward = near.d > 5 ? near : spot
-    return { spot, d: near.d, gap, bearing: bearing(fix, toward), can: accurate && gap <= 0, almost: accurate && gap > 0 && gap <= ALMOST }
+    const can = (accurate && gap <= 0) || !!arrived?.has(spot.id)
+    return { spot, d: near.d, gap, bearing: bearing(fix, toward), can, almost: !can && accurate && gap > 0 && gap <= ALMOST }
   }).sort((a, b) => a.d - b.d)
   const nearest = all.slice(0, n)
   // 可以蓋的不管多遠都要放上去（長山徑可能排不進最近 10 個）
