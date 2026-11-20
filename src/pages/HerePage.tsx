@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SPOT_BY_ID, label, summary, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { monthDay } from '../lib/format'
-import { FIX_TTL, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
+import { FIX_TTL, SETTLE, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
 import { SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
 import { navToSpot } from '../lib/where'
 import { openBook } from '../lib/nav'
@@ -114,6 +114,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const [warnFor, setWarnFor] = useState<RadarSpot | null>(null)
   const [just, setJust] = useState<Stamp | null>(null)
   const [round, setRound] = useState(0) // 每讀一次位置 +1：重播散開的動畫
+  const [slow, setSlow] = useState(false) // 定位超過 4.5 秒還沒好：正中下面說一句，免得以為卡住了
   const districts = useDistricts()
   const counted = useCountedStamps()
   const { ready, stamps } = useStamps()
@@ -158,6 +159,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     setSel(null)
     setJust(null)
     setState({ k: 'locating' })
+    setSlow(false)
+    const slowTimer = setTimeout(() => setSlow(true), SETTLE + 500)
     const fake = DEMO ?? getFakeLocation()
     let next: State
     if (fake) {
@@ -171,6 +174,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
         next = { k: 'error', err: err as LocateError }
       }
     }
+    clearTimeout(slowTimer)
+    setSlow(false)
     setState(next)
     setRound((r) => r + 1)
     onReveal() // 不管成功還是失敗，抬頭和導航都浮現出來
@@ -319,6 +324,13 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
             </p>
           )}
           {k === 'idle' && state.expired && <p className="home-msg">剛才的位置已經過了 5 分鐘，按中間的點再讀一次</p>}
+          {k === 'locating' && slow && (
+            <p className="home-msg home-slow" role="status">
+              訊號比較弱，再等幾秒……
+              <br />
+              在室內或高樓之間會慢一點
+            </p>
+          )}
         </div>
 
         {/* 按了某個小章：名字、距離、帶我去 */}

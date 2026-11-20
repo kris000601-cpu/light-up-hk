@@ -2042,6 +2042,11 @@ button.me:active .me-dot {
   color: var(--ink);
   pointer-events: none;
 }
+/* 定位慢：淡淡地浮出來，不搶眼 */
+.home-slow {
+  color: var(--sub);
+  animation: fade-in 0.8s ease;
+}
 .home-msg b {
   display: inline-block;
   margin-top: 4px;
