@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCountedStamps } from '../lib/districts'
 import { bookPages, type BookPage as Page } from '../lib/book'
 import { clearNav, useNavRequest } from '../lib/nav'
-import type { Stamp } from '../lib/stamps'
+import { reloadStamps, useStamps, type Stamp } from '../lib/stamps'
 import { BookPaper, EmptyOct, PageBody } from '../components/BookPaper'
 
 const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
@@ -25,11 +25,14 @@ const toTop = () => document.querySelector('.page')?.scrollTo(0, 0)
 export function BookPage() {
   const stamps = useCountedStamps()
   const pages = useMemo(() => bookPages(stamps), [stamps])
+  const { ready, error } = useStamps()
+  // 還在讀、或讀取出錯時，不要說「還沒有章」（會以為章不見了）
+  if (!ready || error) return <EmptyBook loading={!ready} error={error} />
   if (!stamps.length) return <EmptyBook />
   return <Book stamps={stamps} pages={pages} />
 }
 
-function EmptyBook() {
+function EmptyBook({ loading, error }: { loading?: boolean; error?: string | null } = {}) {
   return (
     <>
       <header className="book-head">
@@ -38,7 +41,18 @@ function EmptyBook() {
       </header>
       <div className="book-empty">
         <EmptyOct width={150} mark="" />
-        <p>還沒有章。到了景點，在「蓋章」頁按一下中間的點，就可以蓋第一個章。</p>
+        {error ? (
+          <p>
+            {error}{' '}
+            <button type="button" className="link" onClick={reloadStamps}>
+              再試一次
+            </button>
+          </p>
+        ) : loading ? (
+          <p>讀取中…</p>
+        ) : (
+          <p>還沒有章。到了景點，在「蓋章」頁按一下中間的點，就可以蓋第一個章。</p>
+        )}
       </div>
     </>
   )
@@ -52,7 +66,9 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
     return Math.max(0, pages.findIndex((p) => p.spotId === want))
   })
   const [toc, setToc] = useState(params.get('toc') === '1' && !target)
-  const p = pages[Math.min(i, pages.length - 1)]
+  // 頁數可能變少（例如清走了測試章）：一律用夾緊後的 idx
+  const idx = Math.min(i, pages.length - 1)
+  const p = pages[idx]
   const sx = useRef<{ x: number; y: number } | null>(null)
   const go = (j: number) => setI(Math.max(0, Math.min(pages.length - 1, j)))
 
@@ -74,7 +90,15 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [toc])
-  const closeToc = () => (history.state?.bookToc ? history.back() : setToc(false))
+  // 連按兩下返回不要退過頭
+  const leaving = useRef(false)
+  const closeToc = () => {
+    if (leaving.current) return
+    leaving.current = true
+    setTimeout(() => (leaving.current = false), 1000)
+    if (history.state?.bookToc) history.back()
+    else setToc(false)
+  }
 
   if (toc)
     return (
@@ -98,8 +122,8 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
             <li key={x.spotId}>
               <button
                 type="button"
-                className={j === i ? 'toc-tile on' : 'toc-tile'}
-                aria-current={j === i ? 'page' : undefined}
+                className={j === idx ? 'toc-tile on' : 'toc-tile'}
+                aria-current={j === idx ? 'page' : undefined}
                 onClick={() => {
                   go(j)
                   closeToc()
@@ -139,20 +163,20 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
           const dy = e.changedTouches[0].clientY - sx.current.y
           sx.current = null
           // 明顯是橫掃才翻頁（上下捲動不算）
-          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(i + (dx < 0 ? 1 : -1))
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(idx + (dx < 0 ? 1 : -1))
         }}
       >
         {/* key：換頁時「逐個看」的狀態歸零 */}
         <PageBody key={p.spotId} name={p.name} area={p.spot?.area} district={p.district} stamps={p.stamps} />
       </div>
       <nav className="flip-nav" aria-label="翻頁">
-        <button type="button" className="flip-btn" disabled={i === 0} onClick={() => go(i - 1)} aria-label="上一頁">
+        <button type="button" className="flip-btn" disabled={idx === 0} onClick={() => go(idx - 1)} aria-label="上一頁">
           <Chevron dir="left" />
         </button>
         {pages.length <= MAX_DOTS ? (
           <span className="flip-dots" aria-hidden="true">
             {pages.map((x, j) => (
-              <span key={x.spotId} className={j === i ? 'on' : undefined} />
+              <span key={x.spotId} className={j === idx ? 'on' : undefined} />
             ))}
           </span>
         ) : (
@@ -160,7 +184,7 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
             {p.page} / {pages.length}
           </span>
         )}
-        <button type="button" className="flip-btn" disabled={i === pages.length - 1} onClick={() => go(i + 1)} aria-label="下一頁">
+        <button type="button" className="flip-btn" disabled={idx === pages.length - 1} onClick={() => go(idx + 1)} aria-label="下一頁">
           <Chevron dir="right" />
         </button>
       </nav>

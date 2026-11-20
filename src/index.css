@@ -384,6 +384,7 @@ button {
   max-width: 480px;
   max-height: 82vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
   background: var(--card);
   border-radius: 22px 22px 0 0;

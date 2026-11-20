@@ -15,7 +15,7 @@ import { distance } from '../lib/range'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation } from '../lib/testMode'
-import { platform } from '../lib/install'
+import { isIOS, platform } from '../lib/install'
 import { StampPage } from '../components/StampPage'
 import { BrowserWarnSheet, needsBrowserWarning } from '../components/BrowserWarn'
 
@@ -38,9 +38,20 @@ function demoAt(): { lat: number; lng: number } | null {
 }
 const DEMO = demoAt()
 
-/** 假位置也照真的定位那樣交結果：約 0.9 秒先交一個粗的（60 米），1.4 秒後變準（12 米） */
-function fakeLocate(at: { lat: number; lng: number }, h: LocateHandlers): () => void {
+/**
+ * 假位置也照真的定位那樣交結果：約 0.9 秒先交一個粗的（60 米），1.4 秒後變準（12 米）。
+ * 測試工具指定了假誤差（例如 400 米，試「誤差太大不給蓋」）就一直用那個誤差。
+ */
+function fakeLocate(at: { lat: number; lng: number; acc?: number }, h: LocateHandlers): () => void {
   const fix = (acc: number): Fix => ({ lat: at.lat, lng: at.lng, acc, at: Date.now(), fake: true })
+  if (at.acc !== undefined) {
+    const t = setTimeout(() => {
+      const only = fix(at.acc!)
+      h.onFix(only)
+      h.onDone(only)
+    }, 900)
+    return () => clearTimeout(t)
+  }
   const t1 = setTimeout(() => h.onFix(fix(60)), 900)
   const t2 = setTimeout(() => {
     const best = fix(12)
@@ -81,7 +92,7 @@ const ERROR_TEXT: Record<LocateError, string> = {
 }
 function deniedText() {
   const p = platform()
-  if (p === 'ios' || (p === 'installed' && /iPhone|iPad/.test(navigator.userAgent)))
+  if (p === 'ios' || (p === 'installed' && isIOS))
     return '沒有定位權限。請到 iPhone「設定」→「私隱與安全性」→「定位服務」，確認已開啟，並允許 Safari 網站使用位置，然後回來再按一次。'
   return '沒有定位權限。請按網址列左邊的圖示（或手機「設定」→「應用程式」→ 瀏覽器 →「權限」），允許使用「位置」，然後再按一次。'
 }
@@ -124,8 +135,17 @@ function TextSeal({ name, font, tone, w, h }: { name: string; font: number; tone
 
 export function HerePage({ active, revealed, onReveal }: { active: boolean; revealed: boolean; onReveal: () => void }) {
   const [state, setState] = useState<State>(mockState)
+  const stateRef = useRef(state)
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
   const [sel, setSel] = useState<string | null>(MOCK ? params.get('sel') : null)
-  const [stampAt, setStampAt] = useState<RadarSpot | null>(null)
+  // 蓋章頁：記下打開時的位置。位置過期、或者重新定位，都不會把開着的蓋章頁關掉，也不會留下舊的
+  const [stampAt, setStampAt] = useState<{ it: RadarSpot; fix: Fix } | null>(null)
+  const stampOpen = useRef(false)
+  useEffect(() => {
+    stampOpen.current = stampAt !== null
+  }, [stampAt])
   const [warnFor, setWarnFor] = useState<RadarSpot | null>(null)
   const [just, setJust] = useState<Stamp | null>(null)
   const [round, setRound] = useState(0) // 每讀一次位置 +1：重播散開的動畫
@@ -164,6 +184,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     // 雷達的中心（ox、oy）要落在畫面的整數像素上：例如 iPhone 15 闊 393，正中是 196.5，
     // 所有章就會落在半個像素上，細虛線框在手機上時有時無
     const measure = () => {
+      // 切到別的分頁時首頁藏起來，量到 0：不理（不然回來時章會從錯的位置滑回來）
+      if (!el.clientWidth || !el.clientHeight) return
       const r = el.getBoundingClientRect()
       setPad({ w: el.clientWidth, h: el.clientHeight, ox: Math.round(r.left + r.width / 2) - r.left, oy: Math.round(r.top + r.height / 2) - r.top })
     }
@@ -181,7 +203,15 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const liveOf = (p: RadarSpot) => live.get(p.spot.id) ?? p
   // 排位置的那一份
   const geo = useMemo(() => (basis ? radarSpots(basis.fix, RADAR_N, arrivedRef.current) : null), [basis])
-  const layout = useMemo(() => (geo ? layoutRadar(geo, pad.w, pad.h, geo.center ? centerAt(geo.center.spot) : CENTER_ME) : null), [geo, pad])
+  const [fontsVer, setFontsVer] = useState(0)
+  useEffect(() => {
+    document.fonts?.ready.then(() => setFontsVer(1))
+  }, [])
+  // fontsVer：網頁字體載入之後重排一次（章的寬度是用真的字體量的）
+  const layout = useMemo(
+    () => (geo ? layoutRadar(geo, pad.w, pad.h, geo.center ? centerAt(geo.center.spot) : CENTER_ME) : null),
+    [geo, pad, fontsVer],
+  )
   const center = geo?.center ? liveOf(geo.center) : null
   const atBox = geo?.center ? centerAt(geo.center.spot) : null
   const selectedP = layout?.placed.find((p) => p.spot.id === sel) ?? null
@@ -192,6 +222,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     arrivedRef.current = new Set()
     setSel(null)
     setJust(null)
+    setStampAt(null)
+    setWarnFor(null)
     setBasis(null)
     setRefining(false)
     setState({ k: 'locating' })
@@ -241,11 +273,15 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   useEffect(() => {
     const check = () => {
       if (document.visibilityState !== 'visible') return
-      setState((st) => {
-        if (st.k !== 'done' || st.fix.fake || MOCK || Date.now() - st.fix.at <= FIX_TTL) return st
-        cancelRef.current?.()
-        return { k: 'idle', expired: true }
-      })
+      // 正在蓋章（蓋章頁開着）時不作廢：蓋章頁用的是打開時的位置
+      if (stampOpen.current) return
+      const st = stateRef.current
+      if (st.k !== 'done' || st.fix.fake || MOCK || Date.now() - st.fix.at <= FIX_TTL) return
+      cancelRef.current?.()
+      setState({ k: 'idle', expired: true })
+      setBasis(null)
+      setSel(null)
+      setWarnFor(null)
     }
     if (active) check()
     document.addEventListener('visibilitychange', check)
@@ -301,7 +337,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
       setWarnFor(it)
       return
     }
-    setStampAt(it)
+    setStampAt({ it, fix })
   }
   const closeStamp = useCallback(() => setStampAt(null), [])
 
@@ -438,7 +474,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
         )}
       </p>
 
-      {stampAt && fix && <StampPage spot={stampAt.spot} fix={fix} distance={stampAt.d} onClose={closeStamp} onSaved={setJust} />}
+      {stampAt && <StampPage spot={stampAt.it.spot} fix={fix ?? stampAt.fix} distance={stampAt.it.d} onClose={closeStamp} onSaved={setJust} />}
       <BrowserWarnSheet
         open={warnFor !== null}
         onCancel={() => setWarnFor(null)}

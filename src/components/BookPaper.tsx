@@ -127,7 +127,7 @@ export function PageBody({ name, area, district, stamps }: { name: string; area?
       </div>
       {n > 1 ? (
         <div className="pv-paper-tap" role="button" tabIndex={0} aria-label="逐個看清每個章" onClick={cycle} onKeyDown={onKey}>
-          <BookPaper stamps={stamps} ruled focus={focus} />
+          <BookPaper stamps={stamps} ruled focus={focused >= 0 ? focus : null} />
         </div>
       ) : (
         <BookPaper stamps={stamps} ruled>

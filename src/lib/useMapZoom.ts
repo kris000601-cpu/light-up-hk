@@ -257,6 +257,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
         const my = (t[0].clientY + t[1].clientY) / 2
         const { fx, fy } = rel(mx, my)
         const dist = Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+        if (dist < 1) return // 兩指碰在一起：這一下不算（不然除以 0，地圖會整個不見）
         const w = start.view.w / (dist / start.dist)
         const h = (w * mapH) / mapW
         // 讓起始時兩指中間的那一點，一直跟着兩指中間走

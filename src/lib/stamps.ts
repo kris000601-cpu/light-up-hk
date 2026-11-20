@@ -85,6 +85,10 @@ function db(): Promise<IDBDatabase> {
         d.close()
         dbPromise = null
       }
+      // iPhone 把 App 放到後台久了，系統可能把數據庫連接關掉：下次用到時重新打開
+      d.onclose = () => {
+        dbPromise = null
+      }
       resolve(d)
     }
     req.onerror = () => reject(req.error)
@@ -97,25 +101,33 @@ function db(): Promise<IDBDatabase> {
 }
 
 /** 在一個交易裏做事；交易真正寫進去之後才算成功 */
-function transact<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore, done: (v: T) => void) => void): Promise<T> {
-  return db().then(
-    (d) =>
-      new Promise<T>((resolve, reject) => {
-        const t = d.transaction(STORE, mode)
+function transact<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore, done: (v: T) => void) => void, retried = false): Promise<T> {
+  return db().then((d) => {
+    let t: IDBTransaction
+    try {
+      t = d.transaction(STORE, mode)
+    } catch (err) {
+      // 連接已經斷了（例如 iPhone 在後台關掉了它）：交易還沒開始、甚麼都沒寫，重新打開再試一次是安全的
+      dbPromise = null
+      if (retried) throw err
+      return transact(mode, run, true)
+    }
+    return new Promise<T>((resolve, reject) => {
         let value: T
         run(t.objectStore(STORE), (v) => (value = v))
         t.oncomplete = () => resolve(value)
         t.onerror = () => reject(t.error)
         t.onabort = () => reject(t.error ?? new Error('abort'))
-      }),
-  )
+    })
+  })
 }
 
 const byTime = (a: Stamp, b: Stamp) => a.at - b.at || a.id - b.id
-const READ_ERROR = '讀取不到印章。如果開了無痕模式，請改用一般模式打開；否則按「再試一次」。'
+const READ_ERROR = '讀取不到印章。如果開了私密瀏覽（無痕模式），請改用一般模式打開；否則按「再試一次」。'
 
-// 設計稿截圖用：網址加 ?mock=1，用一套假印章代替手機裏的（不讀也不寫數據庫）
-let mocked = false
+// 設計稿截圖用：網址加 ?mock=1，用一套假印章代替手機裏的（不讀也不寫數據庫）。
+// 一載入就看網址，不等 App 叫 mockStamps()：不然開頭那一次 reloadStamps() 會先讀了真數據庫
+let mocked = new URLSearchParams(window.location.search).get('mock') === '1'
 export function mockStamps(list: Stamp[]) {
   mocked = true
   set({ ready: true, stamps: [...list].sort(byTime), error: null })
@@ -133,7 +145,7 @@ export async function reloadStamps() {
     // 之前沒批的，這次可能會批（例如剛加到主畫面）
     if (all.length) requestPersist()
   } catch {
-    set({ ready: true, error: READ_ERROR })
+    if (!mocked) set({ ready: true, error: READ_ERROR })
   }
 }
 reloadStamps()
@@ -144,6 +156,13 @@ document.addEventListener('visibilitychange', () => {
 
 /** 蓋一個章；寫進手機成功才回傳，失敗會拋出錯誤（由蓋章頁提示重試） */
 export async function addStamp(s: NewStamp): Promise<Stamp> {
+  if (mocked) {
+    // 截圖模式：只加在畫面上，不寫進手機
+    const no = state.stamps.reduce((m, x) => (x.test ? m : Math.max(m, x.no)), 0) + 1
+    const stamp: Stamp = { ...s, uid: uuid(), no, at: Date.now(), id: -(state.stamps.length + 1) }
+    set({ stamps: [...state.stamps, stamp] })
+    return stamp
+  }
   const stamp = await transact<Stamp>('readwrite', (store, done) => {
     // 編號在同一個交易裏數：兩個分頁同時蓋也不會撞號；清走測試章也不會影響
     store.getAll().onsuccess = (e) => {
@@ -164,6 +183,7 @@ export async function addStamp(s: NewStamp): Promise<Stamp> {
  * 合併後 No. 撞號（兩部手機各自從 No.1 數起）時，全部正式章按蓋章時間重新編號。
  */
 export async function importStamps(list: Omit<Stamp, 'id'>[]): Promise<{ added: number; renumbered: boolean }> {
+  if (mocked) return { added: 0, renumbered: false }
   const res = await transact<{ added: number; renumbered: boolean }>('readwrite', (store, done) => {
     store.getAll().onsuccess = (e) => {
       const all = (e.target as IDBRequest<Stamp[]>).result
@@ -187,6 +207,10 @@ export async function importStamps(list: Omit<Stamp, 'id'>[]): Promise<{ added: 
 
 /** 清走所有測試章 */
 export async function clearTestStamps() {
+  if (mocked) {
+    set({ stamps: state.stamps.filter((x) => !x.test) })
+    return
+  }
   await transact<void>('readwrite', (store, done) => {
     store.openCursor().onsuccess = (e) => {
       const cur = (e.target as IDBRequest<IDBCursorWithValue | null>).result

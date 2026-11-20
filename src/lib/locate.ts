@@ -53,6 +53,8 @@ export function startLocate(h: LocateHandlers): () => void {
   let best: Fix | null = null
   let shown = false
   let done = false
+  /** 中途的錯誤（暫時讀不到、逾時）：先記着，10 秒到了還是一個位置都沒有才報 */
+  let lastErr: LocateError | null = null
   /** 現在交得出去嗎：夠判斷蓋章的馬上交；粗一點的等一下才交 */
   const showable = () => {
     if (!best) return false
@@ -89,10 +91,9 @@ export function startLocate(h: LocateHandlers): () => void {
       if (fix.acc <= GOOD_ENOUGH) finish()
     },
     (e) => {
-      // 拒絕權限要馬上停；其他錯誤如果已經有位置就用它
+      // 拒絕權限要馬上停。其他錯誤常常是暫時的（剛走出地鐵站、樓宇之間），手機過幾秒就讀到：繼續等
       if (e.code === e.PERMISSION_DENIED) finish('denied')
-      else if (e.code === e.POSITION_UNAVAILABLE) finish('unavailable')
-      else finish('timeout')
+      else lastErr = e.code === e.POSITION_UNAVAILABLE ? 'unavailable' : 'timeout'
     },
     { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_WAIT },
   )
@@ -102,7 +103,7 @@ export function startLocate(h: LocateHandlers): () => void {
   const settle = setTimeout(() => {
     if (!done && !shown) show()
   }, SETTLE)
-  const timer = setTimeout(() => finish('timeout'), MAX_WAIT + 500)
+  const timer = setTimeout(() => finish(lastErr ?? 'timeout'), MAX_WAIT + 500)
   return () => {
     if (!done) end()
   }

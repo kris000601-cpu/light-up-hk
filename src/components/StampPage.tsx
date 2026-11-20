@@ -183,7 +183,15 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [onClose])
-  const back = () => (history.state?.stampPage ? history.back() : onClose())
+  // 連按兩下返回不要退過頭（history.back() 要等一下才生效）
+  const leaving = useRef(false)
+  const back = () => {
+    if (leaving.current) return
+    leaving.current = true
+    setTimeout(() => (leaving.current = false), 1000)
+    if (history.state?.stampPage) history.back()
+    else onClose()
+  }
 
   // ---------- 聲音和震動 ----------
   const noise = (dur: number, freq: number, gain: number, type: BiquadFilterType = 'lowpass', delay = 0) => {
@@ -307,7 +315,11 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
     s.raf = requestAnimationFrame(step)
   }
 
+  // 存章時連按「再試一次」不要存兩次
+  const saving = useRef(false)
   const save = async () => {
+    if (saving.current) return
+    saving.current = true
     setSaveError(false)
     try {
       const p = pos.current
@@ -325,6 +337,8 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
       onSaved?.(rec)
     } catch {
       setSaveError(true)
+    } finally {
+      saving.current = false
     }
   }
 
@@ -542,10 +556,10 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
       )}
 
       <div className="sp-foot">
-        {!done && <span className="sp-sub">定位只在你按「讀取位置」的那一刻讀一次</span>}
+        {!done && <span className="sp-sub">定位只在你按首頁中間那一點時讀一次</span>}
         {done && (
           <button type="button" className="btn-primary sp-home rise" onClick={back} disabled={!saved && !saveError}>
-            返回地圖
+            完成
           </button>
         )}
       </div>

@@ -10,14 +10,19 @@ interface Props {
 /** 從底部彈出的面板：點背景或按 Esc 關閉 */
 export function Sheet({ open, label, onClose, children }: Props) {
   const panel = useRef<HTMLDivElement>(null)
+  // 記住最新的 onClose，effect 只跟 open：打開時聚焦一次，之後重畫不再搶焦點
+  const close = useRef(onClose)
+  useEffect(() => {
+    close.current = onClose
+  })
 
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close.current()
     window.addEventListener('keydown', onKey)
     panel.current?.focus()
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
   return (

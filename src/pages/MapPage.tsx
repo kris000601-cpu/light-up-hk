@@ -106,7 +106,7 @@ export function MapPage() {
             <button key={r} type="button" className="region-tab" onClick={() => setRegion(r)}>
               <span className="region-name">{r}</span>
               <span className="region-count">
-                {x.lit} / {x.count}
+                {ready ? x.lit : '–'} / {x.count}
               </span>
             </button>
           )

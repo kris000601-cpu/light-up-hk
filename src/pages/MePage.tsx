@@ -4,13 +4,13 @@ import { InstallSteps } from '../components/InstallHint'
 import { label, useDistricts } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { platform } from '../lib/install'
-import { addStamp, clearTestStamps, usePersist, useStamps } from '../lib/stamps'
+import { addStamp, clearTestStamps, reloadStamps, usePersist, useStamps } from '../lib/stamps'
 import { setFakeLocation, setTestMode, useFakeLocation, useTestMode } from '../lib/testMode'
 
 const VERSION = '0.5'
 
 export function MePage() {
-  const { stamps, error } = useStamps()
+  const { ready, stamps, error } = useStamps()
   const persist = usePersist()
   const test = useTestMode()
   const installed = platform() === 'installed'
@@ -36,7 +36,14 @@ export function MePage() {
           印章保存
         </h2>
         {error ? (
-          <p className="warn">{error}</p>
+          <p className="warn">
+            {error}{' '}
+            <button type="button" className="link" onClick={reloadStamps}>
+              再試一次
+            </button>
+          </p>
+        ) : !ready ? (
+          <p className="block-text">讀取中…</p>
         ) : (
           <p className="block-text">
             印章只存在這部手機裏，現在共 <b>{real}</b> 枚
@@ -63,7 +70,7 @@ export function MePage() {
             </span>
           </li>
         </ul>
-        <p className="fine">換手機、或在設定裏清除瀏覽器資料，印章會不見；有備份的話可以用下面的「從備份恢復」找回來。</p>
+        <p className="fine">換手機、或在設定裏清除瀏覽器資料，印章會不見；有備份的話可以用下面的「從備份還原」找回來。</p>
       </section>
 
       <BackupCard />
@@ -104,7 +111,7 @@ function TestTools() {
         測試工具
       </h2>
       <p className="block-text">
-        「假裝在這」：回到地圖按「讀取位置」，就當你人在那個景點（不讀 GPS），可以試「附近可蓋章」和「下一站」。「蓋測試章」：直接蓋，不用定位。測試章只在測試模式開着時算進進度，可以一鍵清走。
+        「假裝在這」：回到「蓋章」頁按中間的點，就當你人在那個景點（不讀 GPS），可以試「你已到達」和蓋章；選大的假誤差可以試「誤差太大，不給蓋」。「蓋測試章」：直接蓋，不用定位。測試章只在測試模式開着時算進進度，可以一鍵清走。
       </p>
       {fake && (
         <p className="fake-note">

@@ -1,4 +1,4 @@
-// 備份的介面：「我的」頁的備份卡（導出 / 從備份恢復），和首頁「有幾個章還沒備份」的提示。
+// 備份的介面：「我的」頁的備份卡（匯出 / 從備份還原），和首頁「有幾個章還沒備份」的提示。
 import { useEffect, useRef, useState } from 'react'
 import { hideBackupHint, backupHintHidden, markBackedUp, planImport, readBackup, saveBackup, useLastBackup, type BackupError, type BackupStamp } from '../lib/backup'
 import { isIOS } from '../lib/install'
@@ -11,7 +11,7 @@ const ymd = (ms: number) =>
 
 const ERRORS: Record<BackupError, string> = {
   notOurs: '這不是點亮香港的備份檔案。請選檔名像「點亮香港備份-2026-11-20.json」的檔案。',
-  broken: '這個備份檔案有部分內容讀不到，可能壞了，沒有導入任何章。',
+  broken: '這個備份檔案有部分內容讀不到，可能壞了，沒有匯入任何章。',
   newer: '這個備份來自較新版本的點亮香港。請先關掉 App 再打開（會自動更新），然後再試。',
   tooBig: '這個檔案太大，不像是點亮香港的備份。',
 }
@@ -95,7 +95,7 @@ export function BackupCard() {
       setPending(null)
       setMsg({ ok: true, text: `加入了 ${r.added} 個章。${r.renumbered ? '兩邊的章合併之後，No. 按蓋章日子重新排過。' : ''}` })
     } catch {
-      setMsg({ ok: false, text: '存不進手機，沒有導入任何章。請再試一次。' })
+      setMsg({ ok: false, text: '存不進手機，沒有匯入任何章。請再試一次。' })
     } finally {
       setBusy(false)
     }
@@ -107,7 +107,7 @@ export function BackupCard() {
         備份
       </h2>
       <p className="block-text small">
-        備份檔案存着你所有的章：日子、地點、蓋在紙上的位置。換手機、清除了瀏覽器資料，或者想把 Safari 裏蓋的章搬到主畫面 App，都可以用它恢復。
+        備份檔案存着你所有的章：日子、地點、蓋在紙上的位置。換手機、清除了瀏覽器資料，或者想把 Safari 裏蓋的章搬到主畫面 App，都可以用它還原。
       </p>
       <p className="backup-state">
         {!ready
@@ -119,16 +119,16 @@ export function BackupCard() {
               : `還沒備份過（手機裏有 ${list.length} 個章）`}
       </p>
       <button type="button" className="btn-primary block" disabled={!ready || !list.length} onClick={doExport}>
-        導出備份
+        匯出備份
       </button>
       <p className="fine">{isIOS ? '在彈出的選單裏選「儲存到檔案」，或者傳給自己。' : '檔案會存到「下載」。'}</p>
       <button type="button" className="btn-outline" disabled={!ready || busy} onClick={() => file.current?.click()}>
-        從備份恢復
+        從備份還原
       </button>
       <input ref={file} type="file" accept=".json,application/json,text/plain" hidden onChange={(e) => onPick(e.target.files?.[0])} />
 
       {pending && (
-        <div className="backup-confirm" role="alertdialog" aria-label="確認導入">
+        <div className="backup-confirm" role="alertdialog" aria-label="確認匯入">
           <p>
             這份備份有 <b>{pending.total}</b> 個章（{ymd(pending.from)}
             {pending.from !== pending.to && ` – ${ymd(pending.to)}`}）。
@@ -150,7 +150,7 @@ export function BackupCard() {
             </>
           ) : (
             <>
-              <p>這份備份裏的章，手機裏全部都有了，不用恢復。</p>
+              <p>這份備份裏的章，手機裏全部都有了，不用還原。</p>
               <div className="backup-btns">
                 <button type="button" className="btn-small" onClick={() => setPending(null)}>
                   好
@@ -182,7 +182,7 @@ export function BackupHint() {
     <aside className="install-hint" aria-label="備份提示">
       <div className="install-hint-text">
         <b>有 {since} 個章還沒備份</b>
-        <p>章只存在這部手機。換手機或清除瀏覽器資料時會不見，導出一份備份比較安心。</p>
+        <p>章只存在這部手機。換手機或清除瀏覽器資料時會不見，匯出一份備份比較安心。</p>
         <button type="button" className="btn-primary" onClick={() => navigate({ tab: 'me', anchor: 'backup' })}>
           去備份
         </button>

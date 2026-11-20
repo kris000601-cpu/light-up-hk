@@ -70,6 +70,8 @@ function clean(x: unknown): BackupStamp | null {
   if (!x || typeof x !== 'object') return null
   const s = x as Record<string, unknown>
   if (!str(s.uid) || !str(s.spotId) || !str(s.spotName) || !str(s.district) || !num(s.at) || !num(s.no)) return null
+  // 編號要是正整數、時間要是正數（手改壞了的檔案不要弄亂手機裏的編號）
+  if (!Number.isInteger(s.no) || (s.no as number) < 1 || (s.at as number) <= 0) return null
   if (![s.lat, s.lng, s.acc, s.px, s.py, s.rot].every(optNum)) return null
   const out: BackupStamp = {
     uid: s.uid as string,
@@ -95,7 +97,8 @@ export async function readBackup(file: File): Promise<BackupStamp[]> {
   }
   const d = data as { format?: unknown; version?: unknown; stamps?: unknown }
   if (!d || d.format !== FORMAT || !Array.isArray(d.stamps)) throw 'notOurs' satisfies BackupError
-  if (typeof d.version !== 'number' || d.version > VERSION) throw 'newer' satisfies BackupError
+  if (typeof d.version !== 'number' || !Number.isFinite(d.version) || d.version < 1) throw 'notOurs' satisfies BackupError
+  if (d.version > VERSION) throw 'newer' satisfies BackupError
   const list = d.stamps.map(clean)
   if (list.some((x) => !x)) throw 'broken' satisfies BackupError
   // 同一個檔案裏重複的 uid 只留一個
