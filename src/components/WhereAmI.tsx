@@ -6,8 +6,7 @@ import { ACC_LIMIT, FIX_TTL, formatDistance, locate, type Fix, type LocateError 
 import { metresToRange, nearestOnShape, navTarget } from '../lib/range'
 import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation, setFakeLocation, useFakeLocation } from '../lib/testMode'
-import { InstallSteps } from './InstallHint'
-import { Sheet } from './Sheet'
+import { BrowserWarnSheet, needsBrowserWarning } from './BrowserWarn'
 import { StampPage } from './StampPage'
 
 type Status =
@@ -24,14 +23,14 @@ interface Scored {
   gap: number
 }
 
-const ERROR_TEXT: Record<LocateError, string> = {
+export const ERROR_TEXT: Record<LocateError, string> = {
   denied: '',
   unavailable: '讀不到位置。請確認手機已開啟定位服務，再試一次。',
   timeout: '定位太久沒有結果。走到比較空曠的地方，再試一次。',
   unsupported: '這個瀏覽器不支援定位，請改用 Safari 或 Chrome。',
 }
 
-function deniedText() {
+export function deniedText() {
   const p = platform()
   if (p === 'ios' || (p === 'installed' && /iPhone|iPad/.test(navigator.userAgent)))
     return '沒有定位權限。請到 iPhone「設定」→「私隱與安全性」→「定位服務」，確認已開啟，並允許 Safari 網站使用位置，然後回來再按一次。'
@@ -48,18 +47,6 @@ const dist = (m: number) => {
 }
 
 const clock = (ms: number) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit', hour12: false }).format(ms)
-
-/** iPhone Safari / App 內置瀏覽器裏，第一次正式蓋章前提醒：這裏的章和主畫面 App 是分開存的 */
-const BROWSER_OK_KEY = 'browser-stamp-ok'
-const needsBrowserWarning = () => {
-  const p = platform()
-  if (p !== 'ios' && p !== 'inapp') return false
-  try {
-    return localStorage.getItem(BROWSER_OK_KEY) !== '1'
-  } catch {
-    return true
-  }
-}
 
 /** 首頁的「我在哪」：讀一次位置 → 附近可蓋章 / 下一站票根 */
 export function WhereAmI() {
@@ -252,42 +239,21 @@ export function WhereAmI() {
         />
       )}
 
-      <Sheet open={warnFor !== null} label="先加到主畫面？" onClose={() => setWarnFor(null)}>
-        <div className="sheet-head">
-          <h2 className="sheet-title">先加到主畫面？</h2>
-        </div>
-        <p className="warn-body">
-          你現在不是從主畫面打開。在 iPhone 上，瀏覽器和主畫面的「點亮香港」是<b>分開存印章</b>的：在這裏蓋的章，之後從主畫面打開會看不到。
-        </p>
-        <InstallSteps />
-        <div className="warn-actions">
-          <button type="button" className="btn-outline" onClick={() => setWarnFor(null)}>
-            先不蓋，去加主畫面
-          </button>
-          <button
-            type="button"
-            className="btn-text"
-            onClick={() => {
-              try {
-                localStorage.setItem(BROWSER_OK_KEY, '1')
-              } catch {
-                /* 存不了就下次再問 */
-              }
-              const s = warnFor
-              setWarnFor(null)
-              if (s) stamp(s, true)
-            }}
-          >
-            照樣在這裏蓋
-          </button>
-        </div>
-      </Sheet>
+      <BrowserWarnSheet
+        open={warnFor !== null}
+        onCancel={() => setWarnFor(null)}
+        onConfirm={() => {
+          const s = warnFor
+          setWarnFor(null)
+          if (s) stamp(s, true)
+        }}
+      />
     </section>
   )
 }
 
 /** 「下一站」票根：離你最近、還沒蓋章的景點；按下打開 Google 地圖導航 */
-function Ticket({ item, fix, code, districtLabel }: { item: Scored; fix: Fix; code: string; districtLabel: string }) {
+export function Ticket({ item, fix, code, districtLabel }: { item: Scored; fix: Fix; code: string; districtLabel: string }) {
   const { spot, d } = item
   const dist = formatDistance(d)
   const href = navHref(navTarget(fix.lat, fix.lng, spot))

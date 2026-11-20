@@ -2031,3 +2031,430 @@ button.pv-row {
 .backup-btns button {
   min-height: 44px;
 }
+
+/* ---------- 新首頁（原型 ?home=a）：空白的紙 + 正中一點 → 按下讀位置 → 最近 10 個印章散開 ---------- */
+.home-slot[hidden] {
+  display: none;
+}
+.home-slot,
+.home {
+  height: 100%;
+}
+.home {
+  display: flex;
+  flex-direction: column;
+}
+/* 抬頭：一開始藏起來（仍然佔位，浮現時正中那一點不會跳） */
+.home-chrome {
+  padding: 0 4px;
+  transition:
+    opacity 0.9s ease 0.25s,
+    transform 0.9s ease 0.25s;
+}
+.home-chrome.off,
+.home-status.off {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+.here-stats {
+  margin: 10px 0 0;
+  padding: 8px 0 9px;
+  border-top: 1.5px solid var(--navy);
+  border-bottom: 1px solid var(--navy);
+  font-size: 13px;
+  color: var(--sub);
+}
+.here-stats b {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--ink);
+}
+.tabbar {
+  transition:
+    opacity 0.9s ease 0.45s,
+    transform 0.9s ease 0.45s;
+}
+.tabbar.off {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.home-pad {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 380px;
+  margin: 0 -16px;
+  overflow: hidden;
+}
+.pad-all {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.radar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+
+/* 你：正中一點 */
+.me {
+  position: absolute;
+  left: -22px;
+  top: -22px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button.me {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.me-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--navy);
+  box-shadow: 0 0 0 4px var(--paper);
+  transition: transform 0.15s ease;
+}
+.home:has(.pad-all:active) .me-dot,
+button.me:active .me-dot {
+  transform: scale(0.75);
+}
+
+/* 波紋：像聲吶，慢慢一圈圈往外擴散（「冥冥之中」叫人去按）；定位中變快 */
+.ripples i,
+.acc,
+.ring,
+.sweep {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ripples i {
+  left: -150px;
+  top: -150px;
+  width: 300px;
+  height: 300px;
+  border: 1px solid var(--navy);
+  opacity: 0;
+  animation: sonar 3.6s cubic-bezier(0.25, 0.6, 0.3, 1) infinite;
+}
+.ripples i:nth-child(2) {
+  animation-delay: 1.2s;
+}
+.ripples i:nth-child(3) {
+  animation-delay: 2.4s;
+}
+@keyframes sonar {
+  0% {
+    transform: scale(0.05);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+.st-locating .ripples i {
+  animation-duration: 1.5s;
+}
+.st-locating .ripples i:nth-child(2) {
+  animation-delay: 0.5s;
+}
+.st-locating .ripples i:nth-child(3) {
+  animation-delay: 1s;
+}
+/* 截圖時沒有動畫：三圈停在不同大小 */
+.mock .ripples i {
+  opacity: 0.3;
+  transform: scale(0.35);
+}
+.mock .ripples i:nth-child(2) {
+  opacity: 0.18;
+  transform: scale(0.65);
+}
+.mock .ripples i:nth-child(3) {
+  opacity: 0.08;
+  transform: scale(0.95);
+}
+.acc {
+  transform: translate(-50%, -50%);
+  border: 1.2px dashed var(--navy);
+  background: rgba(45, 62, 92, 0.05);
+  transition:
+    width 0.6s ease-out,
+    height 0.6s ease-out;
+}
+
+/* 結果：比例圈、北、掃出去的一圈 */
+.ring {
+  transform: translate(-50%, -50%);
+  border: 1px dashed var(--hair);
+}
+.ring-text {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0 3px;
+  background: var(--paper);
+  font-size: 10px;
+  color: var(--sub);
+  white-space: nowrap;
+}
+.north {
+  position: absolute;
+  left: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 11px;
+  color: var(--navy);
+  pointer-events: none;
+}
+.sweep {
+  border: 1.5px solid var(--navy);
+  opacity: 0;
+}
+
+/* 小印章：越近越大；蓋過 = 紅，沒去過 = 墨藍虛線，就在範圍裏 = 紅 + 一圈 */
+.rs {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rs::before {
+  /* 手指好按：點擊範圍比看起來大一點 */
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.seal {
+  display: block;
+  overflow: visible;
+}
+.seal-todo {
+  color: var(--navy);
+}
+.seal-done,
+.seal-can {
+  color: var(--seal);
+}
+.rs-name {
+  width: 100%;
+  font-size: 11px;
+  line-height: 13px;
+  text-align: center;
+  color: var(--ink);
+}
+.rs-todo .rs-name {
+  color: var(--sub);
+}
+.rs-can .rs-name,
+.rs-done .rs-name {
+  color: var(--seal-text);
+}
+.rs-can .seal {
+  animation: canPulse 2s ease-in-out infinite;
+}
+@keyframes canPulse {
+  50% {
+    transform: scale(1.06);
+  }
+}
+.rs.sel .rs-name {
+  font-weight: 700;
+  color: var(--ink);
+}
+.rs.sel .seal {
+  transform: scale(1.12);
+}
+
+/* 正中：已經在範圍裏的那個，大一號，到達那一刻亮一圈印泥紅（像 Pokémon GO 走進補給站） */
+.at {
+  position: absolute;
+  left: -75px;
+  top: -66px;
+  z-index: 2;
+  width: 150px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.at-top {
+  height: 16px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 4px;
+  font-weight: 700;
+  color: var(--seal-text);
+}
+.at-name {
+  margin-top: 4px;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 19px;
+  letter-spacing: 2px;
+  line-height: 1.3;
+}
+.at-hint {
+  font-size: 12px;
+  color: var(--seal-text);
+}
+.at:active .seal {
+  transform: scale(0.96);
+}
+.arrive {
+  position: absolute;
+  left: 50%;
+  top: 66px;
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
+  border-radius: 50%;
+  border: 2px solid var(--seal);
+  opacity: 0;
+  pointer-events: none;
+  animation: arrive 1.6s ease-out 0.25s 1;
+}
+@keyframes arrive {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* 讀不到位置、位置過期：正中下面一段話 */
+.home-msg {
+  position: absolute;
+  left: -140px;
+  top: 34px;
+  z-index: 1;
+  width: 280px;
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+  pointer-events: none;
+}
+.home-msg b {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--navy);
+}
+
+/* 按了某個小章：下面一張小卡片 */
+.rs-card {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 10px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px 11px 14px;
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 4px 16px rgba(30, 43, 60, 0.1);
+  animation: cardIn 0.22s ease-out;
+}
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.rs-card-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+  color: var(--sub);
+}
+.rs-card-text b {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: var(--ink);
+}
+.rs-card-text .link {
+  font-size: 12px;
+}
+
+.home-status {
+  min-height: 18px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--sub);
+  text-align: center;
+  transition:
+    opacity 0.9s ease 0.6s,
+    transform 0.9s ease 0.6s;
+}
+
+/* 「帶我去 ›」：區詳情、首頁小卡片 */
+.go-btn {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--navy);
+  border-radius: 17px;
+  background: var(--card);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+/* 手指好按：點擊範圍比看起來大一圈 */
+.go-btn::before {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}

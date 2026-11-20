@@ -21,7 +21,8 @@ const params = new URLSearchParams(window.location.search)
 const initial = params.get('d')
 const initialRegion = (REGIONS as string[]).includes(params.get('region') ?? '') ? (params.get('region') as Region) : null
 
-export function MapPage() {
+/** hideWhere：「我在哪」搬到首頁之後，地圖頁不再顯示 */
+export function MapPage({ hideWhere }: { hideWhere?: boolean } = {}) {
   // 只記住區的代號：印章一變，區的進度會重算，要拿新的那份
   const [selCode, setSelCode] = useState<string | null>(initial)
   const [region, setRegion] = useState<Region | null>(initialRegion)
@@ -114,7 +115,7 @@ export function MapPage() {
         })}
       </div>
 
-      <WhereAmI />
+      {!hideWhere && <WhereAmI />}
 
       <p className="credit">
         區界：民政事務總署（DATA.GOV.HK）；海岸線、景點範圍：

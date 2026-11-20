@@ -1,8 +1,18 @@
 import type { ReactNode } from 'react'
 
-export type Tab = 'map' | 'book' | 'me'
+export type Tab = 'here' | 'map' | 'book' | 'me'
 
 const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
+  {
+    id: 'here',
+    label: '蓋章',
+    icon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true">
+        <path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z" />
+        <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
   {
     id: 'map',
     label: '地圖',
@@ -35,10 +45,11 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   },
 ]
 
-export function TabBar({ current, onChange }: { current: Tab; onChange: (tab: Tab) => void }) {
+/** items：顯示哪幾格（預設地圖 / 印章冊 / 我的）；hidden：新首頁剛打開時先藏起來（仍然佔位，浮現時版面不跳） */
+export function TabBar({ current, onChange, items = ['map', 'book', 'me'], hidden }: { current: Tab; onChange: (tab: Tab) => void; items?: Tab[]; hidden?: boolean }) {
   return (
-    <nav className="tabbar">
-      {TABS.map((t) => (
+    <nav className={hidden ? 'tabbar off' : 'tabbar'} inert={hidden} style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+      {TABS.filter((t) => items.includes(t.id)).map((t) => (
         <button
           key={t.id}
           type="button"

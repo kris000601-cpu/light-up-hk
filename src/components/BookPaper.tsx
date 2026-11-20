@@ -75,11 +75,20 @@ export function MiniStamp({ stamp, width, lite = true }: { stamp: Stamp; width: 
 }
 
 /** 還沒蓋的章位：虛線八角 */
-export function EmptyOct({ width, mark = '？' }: { width: number; mark?: string }) {
+/** fine：大尺寸用的細線（線寬、虛線間距按螢幕像素固定，不隨大小變粗） */
+export function EmptyOct({ width, mark = '？', fine }: { width: number; mark?: string; fine?: boolean }) {
+  const k = 210 / width
   return (
     <span className="empty-oct" style={{ width, height: Math.round((width * 170) / 210) }} aria-hidden="true">
       <svg viewBox="0 0 210 170" width="100%" height="100%">
-        <path d="M30 4H180L206 30V140L180 166H30L4 140V30Z" fill="none" stroke="currentColor" strokeWidth={4} strokeDasharray="10 9" strokeLinejoin="round" />
+        <path
+          d="M30 4H180L206 30V140L180 166H30L4 140V30Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={fine ? 1.6 * k : 4}
+          strokeDasharray={fine ? `${6 * k} ${5 * k}` : '10 9'}
+          strokeLinejoin="round"
+        />
       </svg>
       {mark && <span className="empty-oct-mark">{mark}</span>}
     </span>

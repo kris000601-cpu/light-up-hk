@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { label, useCountedStamps, type District } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { openBook } from '../lib/nav'
+import { navToSpot } from '../lib/where'
 import type { Stamp } from '../lib/stamps'
 import { EmptyOct, MiniStamp } from './BookPaper'
 import { Sheet } from './Sheet'
@@ -12,7 +13,7 @@ interface Props {
   onClose: () => void
 }
 
-/** 區詳情：這個區的景點。蓋過章的左邊是最近那一枚（照蓋的角度），按一下跳到印章冊那一頁；沒去過的是虛線章位 */
+/** 區詳情：這個區的景點。蓋過章的左邊是最近那一枚（照蓋的角度），按一下跳到印章冊那一頁；沒去過的是虛線章位，右邊「帶我去」導航 */
 export function DistrictSheet({ district, onClose }: Props) {
   const stamps = useCountedStamps()
   const bySpot = useMemo(() => {
@@ -67,7 +68,10 @@ export function DistrictSheet({ district, onClose }: Props) {
                     <EmptyOct width={46} />
                   </span>
                   {text}
-                  <span className="spot-state">未去過</span>
+                  {/* 左邊的問號章位已經說了「沒去過」，右邊鼓勵出發：用 Google 地圖導航過去 */}
+                  <a className="go-btn" href={navToSpot(s)} target="_blank" rel="noopener" aria-label={`帶我去${s.name}（Google 地圖導航）`}>
+                    帶我去 ›
+                  </a>
                 </div>
               )}
             </li>
