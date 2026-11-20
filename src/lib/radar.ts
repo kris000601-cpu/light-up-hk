@@ -76,8 +76,6 @@ export interface RadarLayout {
   placed: Placed[]
   /** 最外一圈的半徑 */
   R: number
-  /** 比例圈：例如 500 米、2 公里在哪個半徑；字寫在右下方 (lx, ly) */
-  rings: { r: number; text: string; lx: number; ly: number }[]
 }
 
 /** 長條章（只有字）：字距 0.12em，左右各留 10 像素，框 1.5 像素 */
@@ -109,22 +107,11 @@ export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { 
     return { ...it, r, font, w, h, x: r * Math.sin(it.bearing), y: -r * Math.cos(it.bearing) }
   })
 
-  // 比例圈：選在中間和最外圈之間的幾個整數距離，彼此至少隔 34 像素，最多 3 個；字寫在右下方
-  const NICE = [100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000]
-  const rings: RadarLayout['rings'] = []
-  for (const d of NICE) {
-    const r = scale(d)
-    if (r < rMin + 24 || r > R - 6) continue
-    if (rings.length && r - rings[rings.length - 1].r < 34) continue
-    rings.push({ r, text: d < 1000 ? `${d} 米` : `${d / 1000} 公里`, lx: r * Math.SQRT1_2, ly: r * Math.SQRT1_2 })
-  }
-  while (rings.length > 3) rings.splice(1, 1)
-
-  // 章不准壓住的東西：正中那個、頂上的「北」、比例圈的字
+  // 章不准壓住的東西：正中那個、頂上的「北」
+  // （不畫寫着「1 公里」的比例圈：距離是壓縮過的，章被挪開之後也不在原位，寫數字反而誤導。Chris 2026-11-20）
   const obstacles = [
     { x: 0, y: 0, w: centerBox.w, h: centerBox.h },
     { x: 0, y: -R - 11, w: 22, h: 20 },
-    ...rings.map((g) => ({ x: g.lx, y: g.ly, w: g.text.length * 7 + 14, h: 16 })),
   ]
 
   // 排位置：近的先放，放在真實的方向和距離上；放不下（會疊住別的章或上面的字）就在附近找最近的空位，
@@ -163,5 +150,10 @@ export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { 
     boxes.push({ x: p.x, y: p.y, w: p.w, h: p.h })
   }
 
-  return { placed, R, rings }
+  // 對齊整數像素：小數位置在手機上會令細邊框（尤其虛線）時有時無
+  for (const p of placed) {
+    p.x = Math.round(p.x)
+    p.y = Math.round(p.y)
+  }
+  return { placed, R }
 }

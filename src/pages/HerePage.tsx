@@ -165,7 +165,9 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   }, [active])
 
   // 浮現（像雷達找到東西）：一圈波紋從正中慢慢掃出去，掃到哪個章，那個章就在原地從紙底下慢慢透出來
-  // （由淡、由模糊、由略低一點，到清楚），不飛、不彈。近的先出現。
+  // （由淡到濃、由模糊到清楚，位置一點都不動），不飛、不彈、不往上移。近的先出現。
+  // 動畫做在章本身（.tseal 和正中的字），不做在外面的按鈕上：對外框做模糊時，手機會按外框的大小裁掉
+  // 超出去的邊，令虛線框左邊缺一截、動畫完了才突然跳出來（Chris 2026-11-20 在 iPhone 上看到）。
   const radarRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const root = radarRef.current
@@ -181,20 +183,20 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     const emerge = (el: Element, delay: number) =>
       el.animate(
         [
-          { opacity: 0, filter: 'blur(6px)', transform: 'translateY(8px)' },
-          { opacity: 0.35, filter: 'blur(3px)', transform: 'translateY(4px)', offset: 0.35 },
-          { opacity: 1, filter: 'blur(0)', transform: 'none' },
+          { opacity: 0, filter: 'blur(5px)' },
+          { opacity: 0.4, filter: 'blur(2.5px)', offset: 0.35 },
+          { opacity: 1, filter: 'blur(0px)' },
         ],
         { duration: 1400, delay, easing: 'cubic-bezier(.3,.5,.3,1)', fill: 'backwards' },
       )
     root.querySelectorAll<HTMLElement>('.rs').forEach((el) => {
       // 波紋走到這個章的半徑時開始透出來（波紋是勻速的，所以時間跟半徑成正比）
       const r = Number(el.dataset.r)
-      emerge(el, Math.max(0, (r / (layout.R + 20)) * SWEEP - 150))
+      const seal = el.querySelector('.tseal')
+      if (seal) emerge(seal, Math.max(0, (r / (layout.R + 20)) * SWEEP - 150))
     })
-    const at = root.querySelector('.at')
-    if (at) emerge(at, 0)
-    root.querySelectorAll<HTMLElement>('.ring, .ring-text, .north').forEach((el) =>
+    root.querySelectorAll('.at-top, .at .tseal, .at-hint').forEach((el) => emerge(el, 0))
+    root.querySelectorAll<HTMLElement>('.north').forEach((el) =>
       el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: 400, fill: 'backwards' }),
     )
     // 只在新讀到位置時播，排版因為紙面大小改變而重算時不播
@@ -252,14 +254,6 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
           {layout && (
             <>
               <span className="sweep" style={{ left: -layout.R - 20, top: -layout.R - 20, width: layout.R * 2 + 40, height: layout.R * 2 + 40 }} aria-hidden="true" />
-              {layout.rings.map((g) => (
-                <span key={g.text} className="ring" style={{ width: g.r * 2, height: g.r * 2 }} aria-hidden="true" />
-              ))}
-              {layout.rings.map((g) => (
-                <span key={g.text} className="ring-text" style={{ left: g.lx, top: g.ly }} aria-hidden="true">
-                  {g.text}
-                </span>
-              ))}
               <span className="north" style={{ top: -layout.R - 19 }} aria-hidden="true">
                 北
               </span>
@@ -274,7 +268,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
             <button
               type="button"
               className="at"
-              style={{ left: -atBox.w / 2, top: -atBox.h / 2, width: atBox.w, height: atBox.h }}
+              style={{ left: -Math.round(atBox.w / 2), top: -Math.round(atBox.h / 2), width: Math.round(atBox.w), height: Math.round(atBox.h) }}
               onClick={() => stamp(center)}
               aria-label={`你已到達${center.spot.name}，按一下蓋章`}
             >
@@ -369,7 +363,7 @@ function RadarStamp({ p, tone, selected, onClick }: { p: Placed; tone: Tone; sel
     <button
       type="button"
       className={`rs rs-${tone}${p.almost ? ' rs-almost' : ''}${selected ? ' sel' : ''}`}
-      style={{ left: p.x - p.w / 2, top: p.y - p.h / 2, width: p.w, height: p.h }}
+      style={{ left: Math.round(p.x - p.w / 2), top: Math.round(p.y - p.h / 2), minWidth: p.w, height: p.h }}
       data-r={p.r}
       onClick={onClick}
       aria-label={`${p.spot.name}，${p.can ? '在範圍裏，可以蓋章' : `距離 ${dist(p.d)}`}`}
