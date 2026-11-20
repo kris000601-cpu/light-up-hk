@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<title>地方核对</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+  :root { --paper: #f3eddf; --card: #fbf8f0; --navy: #2d3e5c; --ink: #1e2b3c; --sub: #5c667a; --hair: #c1c1be; --seal: #b9473a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 14px/1.5 -apple-system, 'Noto Sans TC', 'PingFang HK', sans-serif; }
+  body { display: flex; flex-direction: column; }
+  #map { flex: 0 0 58vh; border-bottom: 1px solid var(--hair); }
+  header { padding: 8px 16px 4px; }
+  h1 { font-size: 17px; margin: 0; }
+  .lead { margin: 2px 0 0; color: var(--sub); font-size: 12px; }
+  .filters { display: flex; gap: 6px; padding: 6px 16px 8px; overflow-x: auto; }
+  .filters button { flex: none; border: 1px solid var(--hair); background: var(--card); color: var(--sub); border-radius: 14px; padding: 3px 10px; font: inherit; font-size: 12px; }
+  .filters button.on { background: var(--navy); border-color: var(--navy); color: var(--card); }
+  .filters button.note { border-color: var(--seal); color: var(--seal); }
+  .filters button.note.on { background: var(--seal); color: var(--card); }
+  #list { flex: 1; overflow-y: auto; padding: 0 16px 24px; -webkit-overflow-scrolling: touch; }
+  .dist { margin: 12px 0 4px; font-size: 12px; color: var(--sub); font-weight: 600; }
+  .row { padding: 8px 10px; margin-bottom: 6px; background: var(--card); border: 1px solid var(--hair); border-left-width: 6px; border-radius: 10px; cursor: pointer; }
+  .row.on { border-color: var(--navy); box-shadow: 0 0 0 1px var(--navy); }
+  .row b { font-weight: 600; font-size: 15px; }
+  .row .meta { font-size: 12px; color: var(--sub); }
+  .row .note { font-size: 12px; color: var(--seal); margin-top: 3px; }
+  .lbl { background: rgba(251,248,240,.85); border: 0; box-shadow: none; color: var(--ink); font-weight: 700; font-size: 12px; padding: 0 3px; white-space: nowrap; }
+  .lbl::before { display: none; }
+  .clbl { background: none; border: 0; box-shadow: none; color: var(--sub); font-size: 10px; padding: 0; white-space: nowrap; }
+  .clbl::before { display: none; }
+  .leaflet-container { background: #e9e4d6; font: inherit; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<header>
+  <h1>地方核对 <span id="count" style="font-weight:400;color:var(--sub);font-size:13px"></span></h1>
+  <p class="lead">内部页面，用户看不到。每块颜色 = 一个「地方」（初稿），粗字是名字；灰色虚线 = 原来的选区界（放大才看到选区名）；红点 = 景点。看两件事：① 名字是不是香港人会这样叫；② 分块合不合理（该分开的、该合并的）。红字是我想问你的。</p>
+</header>
+<div class="filters" id="filters"></div>
+<div id="list"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="places-data.js"></script>
+<script src="data.js"></script>
+<script src="places-notes.js"></script>
+<script>
+const D = window.PLACE_DATA, NOTES = window.PLACE_NOTES || {}
+const ORDER = ['中西區','灣仔區','東區','南區','油尖旺區','深水埗區','九龍城區','黃大仙區','觀塘區','荃灣區','屯門區','元朗區','北區','大埔區','西貢區','沙田區','葵青區','離島區']
+const map = L.map('map', { zoomControl: false }).setView([22.35, 114.13], 10)
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '<a href="https://www.openstreetmap.org/copyright" target="_blank">© OpenStreetMap 贡献者</a>' }).addTo(map)
+const sw = (g) => ({ type: 'Feature', geometry: g })
+
+// 相鄰的地方用不同顏色：按共用的頂點找鄰居，再貪心上色
+const PAL = ['#2d6cdf', '#d9822b', '#2e9e6a', '#9b4dca', '#c9a227', '#d0457a', '#3aa6b9', '#7a8a2b']
+const vtx = new Map()
+for (const p of D.placeGeo) {
+  const rings = p.g.type === 'Polygon' ? [p.g.coordinates] : p.g.coordinates
+  for (const poly of rings) for (const r of poly) for (const c of r) {
+    const k = c[0] + ',' + c[1]
+    if (!vtx.has(k)) vtx.set(k, new Set())
+    vtx.get(k).add(p.id)
+  }
+}
+const nb = {}
+for (const s of vtx.values()) for (const a of s) for (const b of s) if (a !== b) (nb[a] ||= new Set()).add(b)
+const color = {}
+for (const p of D.places) {
+  const used = new Set([...(nb[p.id] || [])].map((x) => color[x]))
+  color[p.id] = PAL.find((c) => !used.has(c)) || PAL[0]
+}
+
+const byId = Object.fromEntries(D.places.map((p) => [p.id, p]))
+const layers = {}
+for (const pg of D.placeGeo) {
+  const p = byId[pg.id]
+  const lay = L.geoJSON(sw(pg.g), { style: { color: color[p.id], weight: 2, fillColor: color[p.id], fillOpacity: 0.28 } }).addTo(map)
+  lay.on('click', () => select(p.id, false))
+  layers[p.id] = lay
+  if (p.label) L.tooltip({ permanent: true, direction: 'center', className: 'lbl' }).setLatLng(p.label).setContent(p.name).addTo(map)
+}
+const dccaLayer = L.layerGroup()
+for (const c of D.dccaGeo) {
+  L.geoJSON(sw(c.g), { interactive: false, style: { color: '#555', weight: 1, dashArray: '3 4', fill: false } }).addTo(dccaLayer)
+}
+const dccaLbl = L.layerGroup()
+for (const c of D.dccaGeo) {
+  const b = L.geoJSON(sw(c.g)).getBounds().getCenter()
+  L.tooltip({ permanent: true, direction: 'center', className: 'clbl' }).setLatLng(b).setContent(c.code + ' ' + c.name).addTo(dccaLbl)
+}
+dccaLayer.addTo(map)
+const syncZoom = () => { if (map.getZoom() >= 14) dccaLbl.addTo(map); else dccaLbl.remove() }
+map.on('zoomend', syncZoom)
+for (const s of window.SPOTS || []) {
+  L.circleMarker([s.lat, s.lng], { radius: 4, color: '#fff', weight: 1, fillColor: '#b9473a', fillOpacity: 1 }).bindTooltip(s.name).addTo(map)
+}
+
+let filter = 'note', cur = null
+const fwrap = document.getElementById('filters')
+const chips = [['note', '要你看的 (' + Object.keys(NOTES).length + ')'], ['all', '全部'], ...ORDER.map((d) => [d, d.replace(/區$/, '')])]
+fwrap.innerHTML = chips.map(([k, t]) => `<button data-f="${k}" class="${k === 'note' ? 'note ' : ''}${k === filter ? 'on' : ''}">${t}</button>`).join('')
+fwrap.onclick = (e) => {
+  const b = e.target.closest('button'); if (!b) return
+  filter = b.dataset.f
+  fwrap.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b))
+  render()
+  if (ORDER.includes(filter)) {
+    const g = L.featureGroup(D.places.filter((p) => p.district === filter).map((p) => layers[p.id]).filter(Boolean))
+    map.fitBounds(g.getBounds(), { padding: [10, 10] })
+  }
+}
+function render() {
+  const list = D.places.filter((p) => filter === 'all' || (filter === 'note' ? NOTES[p.id] : p.district === filter))
+  document.getElementById('count').textContent = `${D.places.length} 个地方 · 用了 ${D.dccaGeo.length} 个选区`
+  let html = '', last = ''
+  for (const p of list) {
+    if (p.district !== last) { html += `<div class="dist">${p.district}</div>`; last = p.district }
+    html += `<div class="row${cur === p.id ? ' on' : ''}" data-id="${p.id}" style="border-left-color:${color[p.id]}">
+      <b>${p.name}</b> <span class="meta">${p.id} · ${p.km2} 平方公里${p.parts > 1 ? ' · ' + p.parts + ' 块' : ''}</span>
+      <div class="meta">选区：${[...p.dcca.map(([c, n]) => c + ' ' + n), ...p.cut.map(([c, n]) => '从 ' + c + ' ' + n + ' 切出一块')].join('、')}</div>
+      <div class="meta">景点：${p.spots.length ? p.spots.map(([, n]) => n).join('、') : '（没有）'}</div>
+      ${NOTES[p.id] ? `<div class="note">${NOTES[p.id]}</div>` : ''}
+    </div>`
+  }
+  document.getElementById('list').innerHTML = html
+}
+document.getElementById('list').onclick = (e) => { const r = e.target.closest('.row'); if (r) select(r.dataset.id, true) }
+function select(id, fly) {
+  cur = id
+  for (const [k, l] of Object.entries(layers)) l.setStyle({ weight: k === id ? 4 : 2, fillOpacity: k === id ? 0.45 : 0.28 })
+  if (fly && layers[id]) map.fitBounds(layers[id].getBounds(), { padding: [20, 20], maxZoom: 16 })
+  render()
+  document.querySelector(`.row[data-id="${id}"]`)?.scrollIntoView({ block: 'nearest' })
+}
+render()
+</script>
+</body>
+</html>
