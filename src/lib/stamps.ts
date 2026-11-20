@@ -159,6 +159,32 @@ export async function addStamp(s: NewStamp): Promise<Stamp> {
   return stamp
 }
 
+/**
+ * 從備份導入：只加手機裏還沒有的章（按 uid 認），現有的不刪、不覆蓋。
+ * 合併後 No. 撞號（兩部手機各自從 No.1 數起）時，全部正式章按蓋章時間重新編號。
+ */
+export async function importStamps(list: Omit<Stamp, 'id'>[]): Promise<{ added: number; renumbered: boolean }> {
+  const res = await transact<{ added: number; renumbered: boolean }>('readwrite', (store, done) => {
+    store.getAll().onsuccess = (e) => {
+      const all = (e.target as IDBRequest<Stamp[]>).result
+      const have = new Set(all.map((s) => s.uid))
+      const fresh = list.filter((s) => !have.has(s.uid))
+      const nos = [...all, ...fresh].filter((s) => !s.test).map((s) => s.no)
+      const renumbered = new Set(nos).size !== nos.length
+      if (renumbered) {
+        const real = [...all, ...fresh].filter((s) => !s.test).sort((a, b) => a.at - b.at || a.uid.localeCompare(b.uid))
+        real.forEach((s, i) => (s.no = i + 1))
+        for (const s of all) if (!s.test) store.put(s)
+      }
+      for (const s of fresh) store.add(s)
+      done({ added: fresh.length, renumbered })
+    }
+  })
+  await reloadStamps()
+  if (res.added) requestPersist()
+  return res
+}
+
 /** 清走所有測試章 */
 export async function clearTestStamps() {
   await transact<void>('readwrite', (store, done) => {

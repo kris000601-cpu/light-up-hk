@@ -3,6 +3,7 @@ import { HKMap } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
 import { InstallHint } from '../components/InstallHint'
+import { BackupHint } from '../components/Backup'
 import { WhereAmI } from '../components/WhereAmI'
 import { REGIONS, SPOT_BY_ID, regionSummary, summary, useCountedStamps, useDistricts, type District, type Region } from '../lib/districts'
 import { monthDay } from '../lib/format'
@@ -84,6 +85,7 @@ export function MapPage() {
       )}
 
       <InstallHint />
+      <BackupHint />
 
       <section className="map-block" aria-label="全港地圖">
         <HKMap selected={selected} onSelect={setSelected} onOpen={setDetail} />

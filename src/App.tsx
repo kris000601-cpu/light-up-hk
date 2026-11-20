@@ -6,7 +6,7 @@ import { BookPage } from './pages/BookPage'
 import { StampPreview } from './pages/StampPreview'
 import { mockStamps } from './lib/stamps'
 import { MOCK_STAMPS } from './lib/mockData'
-import { useBookTarget } from './lib/nav'
+import { clearNav, useNavRequest } from './lib/nav'
 
 const params = new URLSearchParams(window.location.search)
 // 內部預覽：網址加 ?stamps=preview 看 8 個章面圖案（App 裏沒有入口）
@@ -20,11 +20,14 @@ const TAB0: Tab = params.get('tab') === 'book' ? 'book' : params.get('tab') === 
 
 export default function App() {
   const [tab, setTab] = useState<Tab>(TAB0)
-  // 區詳情按一個蓋過章的景點 → 切到印章冊（印章冊自己翻到那一頁）
-  const target = useBookTarget()
+  // 跨分頁跳轉（區詳情 → 印章冊那一頁、首頁備份提示 → 我的）：切分頁，翻頁 / 捲動由那一頁自己處理
+  const nav = useNavRequest()
   useEffect(() => {
-    if (target) setTab('book')
-  }, [target])
+    if (!nav) return
+    setTab(nav.tab)
+    // 只有「翻到某一頁」「捲到某處」要那一頁自己處理完再清
+    if (!nav.spotId && !nav.anchor) clearNav()
+  }, [nav])
   if (PREVIEW) return <StampPreview />
 
   return (

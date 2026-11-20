@@ -1979,3 +1979,55 @@ button.pv-row {
   animation: none !important;
   transition: none !important;
 }
+
+/* ---------- 備份 ---------- */
+.block-text.small {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--sub);
+}
+.backup-state {
+  margin: 10px 0 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hair);
+  font-size: 14px;
+}
+.btn-primary.block {
+  display: block;
+  width: 100%;
+  padding: 10px;
+}
+.backup-confirm {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--navy);
+  border-radius: 12px;
+  background: #fffdf8;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.backup-confirm p {
+  margin: 0 0 6px;
+}
+.backup-confirm b {
+  font-family: var(--font-serif);
+}
+.backup-btns {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.backup-btns .btn-small {
+  padding: 7px 14px;
+  font-size: 14px;
+}
+.backup-msg {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--navy);
+}
+.backup-btns button {
+  min-height: 44px;
+}

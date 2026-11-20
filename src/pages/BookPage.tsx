@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useCountedStamps } from '../lib/districts'
 import { bookPages, type BookPage as Page } from '../lib/book'
-import { clearBookTarget, useBookTarget } from '../lib/nav'
+import { clearNav, useNavRequest } from '../lib/nav'
 import type { Stamp } from '../lib/stamps'
 import { BookPaper, EmptyOct, PageBody } from '../components/BookPaper'
 
@@ -45,7 +45,8 @@ function EmptyBook() {
 }
 
 function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
-  const target = useBookTarget()
+  const nav = useNavRequest()
+  const target = nav?.tab === 'book' && nav.spotId ? nav : null
   const [i, setI] = useState(() => {
     const want = target?.spotId ?? params.get('page') ?? stamps.at(-1)?.spotId
     return Math.max(0, pages.findIndex((p) => p.spotId === want))
@@ -61,7 +62,7 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
     const j = pages.findIndex((x) => x.spotId === target.spotId)
     if (j >= 0) setI(j)
     setToc(false)
-    clearBookTarget()
+    clearNav()
   }, [target, pages])
 
   // 目錄是完整的一頁：手機的「返回」手勢回到剛才那一頁，不離開 App

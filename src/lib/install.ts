@@ -14,7 +14,7 @@ export type Platform =
   | 'desktop'
 
 const ua = navigator.userAgent
-const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+export const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
 const isInApp = /MicroMessenger|Instagram|FBAN|FBAV|Line\//.test(ua)
 const standalone = () =>
   window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true

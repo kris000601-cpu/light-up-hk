@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { BackupCard } from '../components/Backup'
 import { InstallSteps } from '../components/InstallHint'
 import { label, useDistricts } from '../lib/districts'
 import { monthDay } from '../lib/format'
@@ -6,7 +7,7 @@ import { platform } from '../lib/install'
 import { addStamp, clearTestStamps, usePersist, useStamps } from '../lib/stamps'
 import { setFakeLocation, setTestMode, useFakeLocation, useTestMode } from '../lib/testMode'
 
-const VERSION = '0.4'
+const VERSION = '0.5'
 
 export function MePage() {
   const { stamps, error } = useStamps()
@@ -62,8 +63,10 @@ export function MePage() {
             </span>
           </li>
         </ul>
-        <p className="fine">換手機、或在設定裏清除瀏覽器資料，印章會不見。之後會加備份功能。</p>
+        <p className="fine">換手機、或在設定裏清除瀏覽器資料，印章會不見；有備份的話可以用下面的「從備份恢復」找回來。</p>
       </section>
+
+      <BackupCard />
 
       {test && <TestTools />}
 
