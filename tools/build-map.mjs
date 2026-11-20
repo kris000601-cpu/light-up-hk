@@ -11,55 +11,13 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import mapshaper from 'mapshaper'
+import { AIRPORT_IN_TUEN_MUN, loadLand } from './coast-lib.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const P = (...p) => path.join(root, ...p)
-const CACHE = P('tools', '.cache')
-fs.mkdirSync(CACHE, { recursive: true })
 
-// ---------- 1. 海岸線 ----------
-const coastFile = path.join(CACHE, 'osm-coastline.json')
-if (!fs.existsSync(coastFile)) {
-  console.log('下載 OpenStreetMap 海岸線…')
-  const q = '[out:json][timeout:150];way["natural"="coastline"](22.10,113.80,22.60,114.48);out geom;'
-  const res = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'light-up-hk-map-build/0.1' },
-    body: 'data=' + encodeURIComponent(q),
-  })
-  if (!res.ok) throw new Error('Overpass ' + res.status)
-  fs.writeFileSync(coastFile, await res.text())
-}
-const ways = JSON.parse(fs.readFileSync(coastFile, 'utf8')).elements.filter((e) => e.type === 'way')
-
-// OSM 海岸線的規則：陸地永遠在行進方向的左邊。把首尾相接的線段連成環。
-const byStart = new Map(), byEnd = new Map()
-for (const w of ways) { byStart.set(w.nodes[0], w); byEnd.set(w.nodes.at(-1), w) }
-const seen = new Set()
-const rings = [], open = []
-for (const w of ways) {
-  if (seen.has(w.id)) continue
-  let head = w
-  const guard = new Set([head.id])
-  while (byEnd.get(head.nodes[0]) && !guard.has(byEnd.get(head.nodes[0]).id)) { head = byEnd.get(head.nodes[0]); guard.add(head.id) }
-  const coords = []
-  for (let c = head; c && !seen.has(c.id); c = byStart.get(c.nodes.at(-1))) {
-    seen.add(c.id)
-    coords.push(...c.geometry.slice(coords.length ? 1 : 0).map((g) => [g.lon, g.lat]))
-  }
-  const a = coords[0], b = coords.at(-1)
-  if (a[0] === b[0] && a[1] === b[1]) rings.push(coords)
-  else open.push(coords)
-}
-// 香港本體（連着深圳）是一條沒閉合的長鏈：從深圳灣一路沿海岸到大鵬灣。
-// 從終點往北繞到起點把它閉合（北面在香港境外，裁剪時不影響）。
-open.sort((x, y) => y.length - x.length)
-const main = open[0]
-const NORTH = 23.2
-main.push([main.at(-1)[0], NORTH], [main[0][0], NORTH], main[0])
-rings.push(main)
-const land = { type: 'FeatureCollection', features: rings.map((r) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [r] } })) }
-console.log(`海岸線：${rings.length} 個陸地輪廓（含香港本體），忽略 ${open.length - 1} 條境外的開放線段`)
+// ---------- 1. 海岸線（tools/coast-lib.mjs，跟地方圖共用）----------
+const land = await loadLand()
 
 // ---------- 2. 裁掉海面 + 簡化（mapshaper 會保持相鄰區共用邊界的一致）----------
 const districts = fs.readFileSync(P('data', 'hk18-official.geojson'), 'utf8')
@@ -72,7 +30,7 @@ const out = await mapshaper.applyCommands(
     '-rename-fields code=地區號碼,name=地區,en=District target=d',
     // 官方區界畫於機場第三跑道填海之前，跑道北端被劃進了屯門區的海域。機場整個屬離島區，歸回去再合併。
     '-explode target=d',
-    `-each "if (code === 'L' && this.centroidX < 113.96 && this.centroidY < 22.335) { code = 'T'; name = '離島區'; en = 'Islands District' }" target=d`,
+    `-each "if (code === 'L' && ${AIRPORT_IN_TUEN_MUN}) { code = 'T'; name = '離島區'; en = 'Islands District' }" target=d`,
     '-dissolve2 code copy-fields=name,en target=d',
     // 去掉太小、手機上看不見的小島（< 0.15 平方公里）
     '-filter-islands min-area=150000 target=d',
