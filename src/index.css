@@ -2143,7 +2143,6 @@ button.me:active .me-dot {
 
 /* 波紋：像聲吶，慢慢一圈圈往外擴散（「冥冥之中」叫人去按）；定位中變快 */
 .ripples i,
-.acc,
 .sweep {
   position: absolute;
   border-radius: 50%;
@@ -2196,15 +2195,6 @@ button.me:active .me-dot {
   opacity: 0.08;
   transform: scale(0.95);
 }
-.acc {
-  transform: translate(-50%, -50%);
-  border: 1.2px dashed var(--navy);
-  background: rgba(45, 62, 92, 0.05);
-  transition:
-    width 0.6s ease-out,
-    height 0.6s ease-out;
-}
-
 /* 結果：頂上一個「北」、掃出去的一圈 */
 .north {
   position: absolute;

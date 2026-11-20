@@ -24,8 +24,7 @@ export const FIX_TTL = 5 * 60 * 1000
 const GOOD_ENOUGH = 30
 const MAX_WAIT = 10_000
 
-/** onProgress：每讀到一次（越來越準）就報告目前最好的誤差，給畫面畫「越縮越小的圈」 */
-export function locate(onProgress?: (acc: number) => void): Promise<Fix> {
+export function locate(): Promise<Fix> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject('unsupported' satisfies LocateError)
     let best: Fix | null = null
@@ -42,7 +41,6 @@ export function locate(onProgress?: (acc: number) => void): Promise<Fix> {
       (p) => {
         const fix = { lat: p.coords.latitude, lng: p.coords.longitude, acc: Math.round(p.coords.accuracy), at: Date.now() }
         if (!best || fix.acc <= best.acc) best = fix
-        onProgress?.(best.acc)
         if (fix.acc <= GOOD_ENOUGH) finish()
       },
       (e) => {

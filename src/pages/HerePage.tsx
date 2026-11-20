@@ -1,7 +1,7 @@
 // 首頁（2026-11-20 原型，網址 ?home=a）
 //
 // 一打開是一張空白的紙：正中只有一點，波紋一圈圈往外擴散，沒有字、沒有導航。
-// 按一下 → 讀位置（波紋變快，誤差圈越縮越小）→ 一圈波紋慢慢掃出去，最近的 10 個景點的長條章（只有字）
+// 按一下 → 讀位置（波紋變快）→ 一圈波紋慢慢掃出去，最近的 10 個景點的長條章（只有字）
 // 在原地慢慢浮現，像雷達找到東西：方向是真的（上北下南），離中心越遠 = 實際越遠，近的先出現。同時抬頭（收集進度）和底部導航一起浮現。
 // 已經在範圍裏的那個景點落在正中（大一號的實心紅章），亮一圈印泥紅，按它蓋章。讀位置失敗也一樣浮現，正中寫原因。
 // 定位只在按的那一下讀一次，不在背景追蹤。
@@ -20,7 +20,7 @@ import { ERROR_TEXT, deniedText } from '../components/WhereAmI'
 
 type State =
   | { k: 'idle'; expired?: boolean }
-  | { k: 'locating'; acc: number | null }
+  | { k: 'locating' }
   | { k: 'error'; err: LocateError }
   | { k: 'done'; fix: Fix }
 
@@ -37,10 +37,10 @@ function demoAt(): { lat: number; lng: number } | null {
 }
 const DEMO = demoAt()
 
-/** 設計稿截圖：?mock=1&here=locating&acc=60 / here=done&lat=..&lng=..（或 &spot=s026）/ here=error */
+/** 設計稿截圖：?mock=1&here=locating / here=done&lat=..&lng=..（或 &spot=s026）/ here=error */
 function mockState(): State {
   const h = MOCK ? params.get('here') : null
-  if (h === 'locating') return { k: 'locating', acc: Number(params.get('acc') ?? 60) }
+  if (h === 'locating') return { k: 'locating' }
   if (h === 'error') return { k: 'error', err: 'denied' }
   if (h === 'done') {
     const s = SPOT_BY_ID[params.get('spot') ?? '']
@@ -57,9 +57,6 @@ const dist = (m: number) => {
 }
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 const reduceMotion = () => MOCK || (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
-
-/** 誤差（米）→ 誤差圈的直徑（像素）：300 米以上畫最大，越準越小 */
-const accPx = (acc: number) => Math.round(30 + (Math.min(acc, 300) / 300) * 230)
 
 /** 正中那個東西佔多大（推開別的章用）：可以蓋的大章連上下兩行字；或者只是你的位置點 */
 const AT_FONT = 21
@@ -146,20 +143,16 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const run = useCallback(async () => {
     setSel(null)
     setJust(null)
-    setState({ k: 'locating', acc: null })
+    setState({ k: 'locating' })
     const fake = DEMO ?? getFakeLocation()
     let next: State
     if (fake) {
-      // 假位置：照樣播一次定位的樣子，看得到整個流程
-      for (const acc of [180, 70, 25]) {
-        await sleep(450)
-        setState({ k: 'locating', acc })
-      }
-      await sleep(400)
+      // 假位置：照樣等一下（跟真的定位差不多久），看得到整個流程
+      await sleep(1750)
       next = { k: 'done', fix: { lat: fake.lat, lng: fake.lng, acc: 12, at: Date.now(), fake: true } }
     } else {
       try {
-        next = { k: 'done', fix: await locate((acc) => setState({ k: 'locating', acc })) }
+        next = { k: 'done', fix: await locate() }
       } catch (err) {
         next = { k: 'error', err: err as LocateError }
       }
@@ -265,7 +258,6 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
               <i />
             </span>
           )}
-          {k === 'locating' && state.acc != null && <span className="acc" style={{ width: accPx(state.acc), height: accPx(state.acc) }} aria-hidden="true" />}
 
           {layout && (
             <>
