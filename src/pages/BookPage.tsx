@@ -19,6 +19,12 @@ const Chevron = ({ dir }: { dir: 'left' | 'right' }) => (
 const params = new URLSearchParams(window.location.search)
 /** 頁數多過這個就不畫圓點，改寫「3 / 87」 */
 const MAX_DOTS = 15
+/**
+ * 目錄一打開只先畫頭四行（一屏），其餘每一下在下面補四行。
+ * 章多了（例如 87 頁、170 個章）一次畫完，手機上要停半秒到一秒才出現；分批畫，一按就有。
+ * 新的格子只加在下面，看着的那幾行不會動。
+ */
+const TILE_BATCH = 12
 
 const toTop = () => document.querySelector('.page')?.scrollTo(0, 0)
 
@@ -66,6 +72,17 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
     return Math.max(0, pages.findIndex((p) => p.spotId === want))
   })
   const [toc, setToc] = useState(params.get('toc') === '1' && !target)
+  const [shown, setShown] = useState(TILE_BATCH)
+  const openToc = () => {
+    setShown(TILE_BATCH)
+    setToc(true)
+  }
+  // 目錄開着、還沒畫完：下一下再補一批
+  useEffect(() => {
+    if (!toc || shown >= pages.length) return
+    const t = setTimeout(() => setShown((n) => n + TILE_BATCH), 16)
+    return () => clearTimeout(t)
+  }, [toc, shown, pages.length])
   // 頁數可能變少（例如清走了測試章）：一律用夾緊後的 idx
   const idx = Math.min(i, pages.length - 1)
   const p = pages[idx]
@@ -118,7 +135,7 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
           </div>
         </header>
         <ul className="toc-grid">
-          {pages.map((x, j) => (
+          {pages.slice(0, shown).map((x, j) => (
             <li key={x.spotId}>
               <button
                 type="button"
@@ -147,7 +164,7 @@ function Book({ stamps, pages }: { stamps: Stamp[]; pages: Page[] }) {
           <span className="eyebrow">遊歷護照</span>
           第 {p.page} / {pages.length} 頁
         </span>
-        <button type="button" className="flip-toc" onClick={() => setToc(true)}>
+        <button type="button" className="flip-toc" onClick={openToc}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
             <path d="M4 6h16M4 12h16M4 18h10" />
           </svg>

@@ -1,5 +1,5 @@
 // 設計稿截圖用的一套假印章（網址加 ?mock=1）。不會寫進手機。
-import { SPOT_BY_ID } from './districts'
+import { SPOT_BY_ID, SPOTS } from './districts'
 import type { Stamp } from './stamps'
 
 // [景點, 月, 日, 時, 分, px, py, rot]（香港時間）
@@ -38,3 +38,30 @@ export const MOCK_STAMPS: Stamp[] = RAW.map(([spotId, m, d, h, mi, px, py, rot],
 })
   .sort((a, b) => a.at - b.at)
   .map((s, i) => ({ ...s, no: i + 1 }))
+
+/**
+ * 壓力測試：網址加 ?mock=1&many=1 → 每個景點兩個章（約 170 個），看章多了印章冊 / 目錄會不會慢。
+ * 位置、角度、時間都是固定算出來的（每次一樣）。
+ */
+export function manyStamps(): Stamp[] {
+  const out: Stamp[] = []
+  SPOTS.forEach((spot, i) => {
+    for (let k = 0; k < 2; k++) {
+      const j = i * 2 + k
+      out.push({
+        id: j + 1,
+        uid: `many-${j + 1}`,
+        no: 0,
+        spotId: spot.id,
+        spotName: spot.name,
+        district: spot.district,
+        // 第一輪 87 個景點各一個，第二輪再各一個
+        at: Date.UTC(2026, 0, 1) + (k * SPOTS.length + i) * 20 * 3600e3,
+        px: 0.35 + ((j * 37) % 30) / 100,
+        py: 0.35 + ((j * 53) % 25) / 100,
+        rot: ((j * 7) % 13) - 6,
+      })
+    }
+  })
+  return out.sort((a, b) => a.at - b.at).map((s, i) => ({ ...s, no: i + 1 }))
+}

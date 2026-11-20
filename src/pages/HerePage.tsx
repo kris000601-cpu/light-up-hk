@@ -17,7 +17,7 @@ import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation } from '../lib/testMode'
 import { isIOS, platform } from '../lib/install'
 import { StampPage } from '../components/StampPage'
-import { BrowserWarnSheet, needsBrowserWarning } from '../components/BrowserWarn'
+import { BrowserWarnSheet, mustInstallToStamp } from '../components/BrowserWarn'
 
 type State =
   | { k: 'idle'; expired?: boolean }
@@ -162,10 +162,9 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const cancelRef = useRef<(() => void) | null>(null)
   const districts = useDistricts()
   const counted = useCountedStamps()
-  const { ready, stamps } = useStamps()
+  const { ready } = useStamps()
   const s = summary(districts)
   const latest = counted.at(-1)
-  const realCount = stamps.filter((x) => !x.test).length
 
   const timesBySpot = useMemo(() => {
     const m: Record<string, number> = {}
@@ -326,14 +325,14 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     // 只在新讀到位置時播，排版因為紙面大小改變而重算時不播
   }, [round])
 
-  // 按正中的大章：先檢查位置還有效、瀏覽器提醒，然後打開蓋章頁（真正存章在蓋章頁壓到底那一下）
-  const stamp = (it: RadarSpot, confirmed = false) => {
+  // 按正中的大章：先檢查位置還有效、iPhone 瀏覽器要先加主畫面，然後打開蓋章頁（真正存章在蓋章頁壓到底那一下）
+  const stamp = (it: RadarSpot) => {
     if (!fix) return
     if (!fix.fake && Date.now() - fix.at > FIX_TTL) {
       setState({ k: 'idle', expired: true })
       return
     }
-    if (!fix.fake && !confirmed && realCount === 0 && needsBrowserWarning()) {
+    if (mustInstallToStamp()) {
       setWarnFor(it)
       return
     }
@@ -475,15 +474,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
       </p>
 
       {stampAt && <StampPage spot={stampAt.it.spot} fix={fix ?? stampAt.fix} distance={stampAt.it.d} onClose={closeStamp} onSaved={setJust} />}
-      <BrowserWarnSheet
-        open={warnFor !== null}
-        onCancel={() => setWarnFor(null)}
-        onConfirm={() => {
-          const w = warnFor
-          setWarnFor(null)
-          if (w) stamp(w, true)
-        }}
-      />
+      <BrowserWarnSheet open={warnFor !== null} onClose={() => setWarnFor(null)} />
     </div>
   )
 }

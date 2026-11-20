@@ -960,7 +960,7 @@ button:disabled {
   transform: translateY(1px);
 }
 
-/* 瀏覽器裏第一次蓋章前的提醒 */
+/* iPhone 瀏覽器 / App 內置瀏覽器：要先加到主畫面才能蓋章 */
 .warn-body {
   margin: 0 0 10px;
   font-size: 14px;
@@ -1599,6 +1599,11 @@ button.pv-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px 10px;
+}
+/* 捲不到的格子先不排版、不畫（章多了目錄才不卡）；高度先按一格約 153 像素留位 */
+.toc-grid > li {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 153px;
 }
 .toc-tile {
   width: 100%;
