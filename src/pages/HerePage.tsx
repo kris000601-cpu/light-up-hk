@@ -9,7 +9,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { SPOT_BY_ID, label, summary, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { FIX_TTL, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
-import { SEAL_PAD_X, SEAL_PAD_Y, SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
+import { SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
 import { navToSpot } from '../lib/where'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
@@ -68,7 +68,9 @@ const AT_GAP = 6
 const CENTER_ME = { w: 40, h: 40 }
 const centerAt = (spot: Spot) => {
   const s = sealSize(shortName(spot.name), AT_FONT)
-  return { w: Math.max(150, s.w), h: s.h + 2 * (AT_LINE + AT_GAP), seal: s }
+  // 比章闊出來的部分左右平分成整數像素，章的框才會落在整數像素上
+  const w = s.w + 2 * Math.ceil(Math.max(0, 150 - s.w) / 2)
+  return { w, h: s.h + 2 * (AT_LINE + AT_GAP), seal: s }
 }
 
 type Tone = 'done' | 'todo' | 'can'
@@ -77,10 +79,19 @@ type Tone = 'done' | 'todo' | 'can'
  * 長條章：只有字（2026-11-20 Chris 定，取代圖案章）。
  * 可以蓋 = 白文（實心印泥紅、紙色字）；蓋過 = 朱文（紅框紅字，雙線框）；沒去過 = 墨藍虛線框。
  */
-function TextSeal({ name, font, tone }: { name: string; font: number; tone: Tone }) {
+function TextSeal({ name, font, tone, w, h }: { name: string; font: number; tone: Tone; w: number; h: number }) {
+  // 三層：
+  // · .tbox：章的位置和大小，一律整數像素（框畫在半個像素上，手機上細虛線會時有時無）
+  // · .ink：浮現時「由模糊到清楚」的模糊做在這一層，它比章大一圈（每邊 8 像素）。
+  //   模糊直接做在有框的那層的話，iPhone 會在框的邊上裁掉一條，左邊虛線缺一截、動畫完才跳出來（Chris 2026-11-20）
+  // · .tseal：章本身，填滿 .tbox，字居中
   return (
-    <span className={`tseal tseal-${tone}`} style={{ fontSize: font, padding: `${SEAL_PAD_Y}px ${SEAL_PAD_X}px`, letterSpacing: `${SEAL_TRACK}em` }}>
-      {name}
+    <span className="tbox" style={{ width: w, height: h }}>
+      <span className="ink">
+        <span className={`tseal tseal-${tone}`} style={{ fontSize: font, letterSpacing: `${SEAL_TRACK}em`, paddingLeft: `${SEAL_TRACK}em` }}>
+          {name}
+        </span>
+      </span>
     </span>
   )
 }
@@ -109,11 +120,16 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
 
   // 紙面大小（雷達按它排）
   const padRef = useRef<HTMLDivElement>(null)
-  const [pad, setPad] = useState({ w: 358, h: 480 })
+  const [pad, setPad] = useState({ w: 358, h: 480, ox: 179, oy: 240 })
   useLayoutEffect(() => {
     const el = padRef.current
     if (!el) return
-    const measure = () => setPad({ w: el.clientWidth, h: el.clientHeight })
+    // 雷達的中心（ox、oy）要落在畫面的整數像素上：例如 iPhone 15 闊 393，正中是 196.5，
+    // 所有章就會落在半個像素上，細虛線框在手機上時有時無
+    const measure = () => {
+      const r = el.getBoundingClientRect()
+      setPad({ w: el.clientWidth, h: el.clientHeight, ox: Math.round(r.left + r.width / 2) - r.left, oy: Math.round(r.top + r.height / 2) - r.top })
+    }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
@@ -166,8 +182,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
 
   // 浮現（像雷達找到東西）：一圈波紋從正中慢慢掃出去，掃到哪個章，那個章就在原地從紙底下慢慢透出來
   // （由淡到濃、由模糊到清楚，位置一點都不動），不飛、不彈、不往上移。近的先出現。
-  // 動畫做在章本身（.tseal 和正中的字），不做在外面的按鈕上：對外框做模糊時，手機會按外框的大小裁掉
-  // 超出去的邊，令虛線框左邊缺一截、動畫完了才突然跳出來（Chris 2026-11-20 在 iPhone 上看到）。
+  // 動畫做在每個章的 .ink 那層（比章大一圈，見 TextSeal）和正中的兩行字，不做在按鈕上、也不做在有框的那層：
+  // iPhone 做模糊時會在圖層的邊上裁掉一條，邊上剛好是框的話，虛線左邊就缺一截、動畫完了才突然跳出來（Chris 2026-11-20）。
   const radarRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const root = radarRef.current
@@ -192,10 +208,10 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     root.querySelectorAll<HTMLElement>('.rs').forEach((el) => {
       // 波紋走到這個章的半徑時開始透出來（波紋是勻速的，所以時間跟半徑成正比）
       const r = Number(el.dataset.r)
-      const seal = el.querySelector('.tseal')
-      if (seal) emerge(seal, Math.max(0, (r / (layout.R + 20)) * SWEEP - 150))
+      const ink = el.querySelector('.ink')
+      if (ink) emerge(ink, Math.max(0, (r / (layout.R + 20)) * SWEEP - 150))
     })
-    root.querySelectorAll('.at-top, .at .tseal, .at-hint').forEach((el) => emerge(el, 0))
+    root.querySelectorAll('.at-top, .at .ink, .at-hint').forEach((el) => emerge(el, 0))
     root.querySelectorAll<HTMLElement>('.north').forEach((el) =>
       el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: 400, fill: 'backwards' }),
     )
@@ -240,7 +256,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
       >
         {/* 還沒有結果：整張紙都可以按（看起來只有正中一點） */}
         {(k === 'idle' || k === 'error') && <button type="button" className="pad-all" onClick={run} aria-label="讀取位置，看看附近可以蓋甚麼章" />}
-        <div className="radar" ref={radarRef}>
+        <div className="radar" ref={radarRef} style={{ left: pad.ox, top: pad.oy }}>
           {/* 還沒有結果：正中一點 + 波紋 */}
           {(k === 'idle' || k === 'locating') && (
             <span className="ripples" aria-hidden="true">
@@ -274,7 +290,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
             >
               <span className="arrive" aria-hidden="true" />
               <span className="at-top">你已到達</span>
-              <TextSeal name={shortName(center.spot.name)} font={AT_FONT} tone="can" />
+              <TextSeal name={shortName(center.spot.name)} font={AT_FONT} tone="can" w={atBox.seal.w} h={atBox.seal.h} />
               <span className="at-hint">
                 {just?.spotId === center.spot.id ? (just.test ? '測試章已蓋好 · 可以再蓋' : `No. ${just.no} 已蓋好 · 可以再蓋`) : timesBySpot[center.spot.id] ? `第 ${timesBySpot[center.spot.id] + 1} 次來 · 按一下蓋章` : '第一次來 · 按一下蓋章'}
               </span>
@@ -363,12 +379,12 @@ function RadarStamp({ p, tone, selected, onClick }: { p: Placed; tone: Tone; sel
     <button
       type="button"
       className={`rs rs-${tone}${p.almost ? ' rs-almost' : ''}${selected ? ' sel' : ''}`}
-      style={{ left: Math.round(p.x - p.w / 2), top: Math.round(p.y - p.h / 2), minWidth: p.w, height: p.h }}
+      style={{ left: Math.round(p.x - p.w / 2), top: Math.round(p.y - p.h / 2), width: p.w, height: p.h }}
       data-r={p.r}
       onClick={onClick}
       aria-label={`${p.spot.name}，${p.can ? '在範圍裏，可以蓋章' : `距離 ${dist(p.d)}`}`}
     >
-      <TextSeal name={shortName(p.spot.name)} font={p.font} tone={tone} />
+      <TextSeal name={shortName(p.spot.name)} font={p.font} tone={tone} w={p.w} h={p.h} />
     </button>
   )
 }

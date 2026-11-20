@@ -78,20 +78,36 @@ export interface RadarLayout {
   R: number
 }
 
-/** 長條章（只有字）：字距 0.12em，左右各留 10 像素，框 1.5 像素 */
+/** 長條章（只有字）：字距 0.12em，字和框之間左右至少 10 像素、上下 5 像素，框 1.5 像素 */
 export const SEAL_PAD_X = 10
 export const SEAL_PAD_Y = 5
 export const SEAL_TRACK = 0.12
-/** 估算一行字多寬：中文一個字一格，英文數字約 0.6 格 */
-export const textWidth = (s: string, font: number) => [...s].reduce((w, c) => w + (c.charCodeAt(0) > 0x2e80 ? 1 : 0.62) * font + SEAL_TRACK * font, 0)
+export const SEAL_FONT = "900 {px}px 'Noto Serif TC', 'Noto Serif CJK TC', 'PMingLiU', serif"
+
+/** 估算一行字多寬：中文一個字一格，英文數字約 0.6 格（大寫闊一點） */
+const estimate = (s: string, font: number) =>
+  [...s].reduce((w, c) => w + (c.charCodeAt(0) > 0x2e80 ? 1 : c === ' ' ? 0.3 : /[A-Z+]/.test(c) ? 0.8 : 0.62) * font + SEAL_TRACK * font, 0)
+/** 用瀏覽器真的量一次（字體還沒載入時量到的是後備字體，所以跟估算取大的那個） */
+let ctx: CanvasRenderingContext2D | null | undefined
+const measure = (s: string, font: number) => {
+  if (ctx === undefined) ctx = typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d')
+  if (!ctx) return 0
+  ctx.font = SEAL_FONT.replace('{px}', String(font))
+  return ctx.measureText(s).width + [...s].length * SEAL_TRACK * font
+}
+export const textWidth = (s: string, font: number) => Math.max(estimate(s, font), measure(s, font))
+/**
+ * 章的大小一律是整數像素（框就畫在整數像素上，手機上細邊框才不會時有時無）。
+ * 字在框裏居中；字距會在最後一個字後面多留一點，所以左邊補回同樣多（SEAL_TRACK）。
+ */
 export const sealSize = (name: string, font: number) => ({
-  w: Math.ceil(textWidth(name, font) + SEAL_PAD_X * 2 + 3),
+  w: Math.ceil(textWidth(name, font) + SEAL_TRACK * font + SEAL_PAD_X * 2 + 3),
   h: Math.ceil(font * 1.3 + SEAL_PAD_Y * 2 + 3),
 })
 
 /** W、H：紙面的寬高；centerBox：正中那個東西（你的位置點，或者可以蓋的大章連上下的字）佔多大 */
 export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { w: number; h: number }): RadarLayout {
-  const R = Math.max(100, Math.min(W / 2 - 24, H / 2 - 40))
+  const R = Math.floor(Math.max(100, Math.min(W / 2 - 24, H / 2 - 40)))
   const rMin = Math.min(centerBox.w, centerBox.h) / 2 + 30
   const items = data.around
   const lo = 60

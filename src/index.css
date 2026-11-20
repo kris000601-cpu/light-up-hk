@@ -2225,8 +2225,7 @@ button.me:active .me-dot {
 .rs {
   position: absolute;
   z-index: 1;
-  display: grid;
-  place-items: center;
+  display: block;
   padding: 0;
   border: 0;
   background: none;
@@ -2239,8 +2238,23 @@ button.me:active .me-dot {
   position: absolute;
   inset: -7px -4px;
 }
-.tseal {
+/* 章的位置和大小（整數像素）；.ink 比它大一圈，浮現的模糊做在 .ink 上，章的框離模糊圖層的邊有 8 像素，iPhone 不會裁到 */
+.tbox {
+  position: relative;
   display: block;
+  flex: none;
+}
+.ink {
+  position: absolute;
+  inset: -8px;
+  padding: 8px;
+}
+.tseal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   border: 1.5px solid currentColor;
   font-family: var(--font-serif);
