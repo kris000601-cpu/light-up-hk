@@ -1,17 +1,16 @@
 // 首頁（2026-11-20 原型，網址 ?home=a）
 //
 // 一打開是一張空白的紙：正中只有一點，波紋一圈圈往外擴散，沒有字、沒有導航。
-// 按一下 → 讀位置（波紋變快，誤差圈越縮越小）→ 最近的 10 個景點變成小印章，從中間向四周散開：
-// 方向是真的（上北下南），離中心越遠 = 實際越遠，近的先出現。同時抬頭（收集進度）和底部導航一起浮現。
-// 已經在範圍裏的那個景點落在正中，大一號、亮一圈印泥紅，按它蓋章。讀位置失敗也一樣浮現，正中寫原因。
+// 按一下 → 讀位置（波紋變快，誤差圈越縮越小）→ 一圈波紋慢慢掃出去，最近的 10 個景點的長條章（只有字）
+// 在原地慢慢浮現，像雷達找到東西：方向是真的（上北下南），離中心越遠 = 實際越遠，近的先出現。同時抬頭（收集進度）和底部導航一起浮現。
+// 已經在範圍裏的那個景點落在正中（大一號的實心紅章），亮一圈印泥紅，按它蓋章。讀位置失敗也一樣浮現，正中寫原因。
 // 定位只在按的那一下讀一次，不在背景追蹤。
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SPOT_BY_ID, label, summary, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { FIX_TTL, formatDistance, locate, type Fix, type LocateError } from '../lib/locate'
-import { layoutRadar, radarSpots, shortName, type Placed, type RadarSpot } from '../lib/radar'
+import { SEAL_PAD_X, SEAL_PAD_Y, SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
 import { navToSpot } from '../lib/where'
-import { PICTOS, pictoFor } from '../lib/pictos'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation } from '../lib/testMode'
@@ -62,28 +61,27 @@ const reduceMotion = () => MOCK || (window.matchMedia?.('(prefers-reduced-motion
 /** 誤差（米）→ 誤差圈的直徑（像素）：300 米以上畫最大，越準越小 */
 const accPx = (acc: number) => Math.round(30 + (Math.min(acc, 300) / 300) * 230)
 
-/** 正中那個東西佔多大（推開別的章用）：可以蓋的大章連上下的字；或者只是你的位置點 */
-const AT_SIZE = 92
-const CENTER_AT = { w: 150, h: 170, oy: 19 }
-const CENTER_ME = { w: 40, h: 40, oy: 0 }
+/** 正中那個東西佔多大（推開別的章用）：可以蓋的大章連上下兩行字；或者只是你的位置點 */
+const AT_FONT = 21
+const AT_LINE = 16
+const AT_GAP = 6
+const CENTER_ME = { w: 40, h: 40 }
+const centerAt = (spot: Spot) => {
+  const s = sealSize(shortName(spot.name), AT_FONT)
+  return { w: Math.max(150, s.w), h: s.h + 2 * (AT_LINE + AT_GAP), seal: s }
+}
 
-/** 小印章：八角框 + 類型圖案。蓋過 = 紅；沒去過 = 墨藍虛線 */
-function MiniSeal({ spot, size, tone }: { spot: Spot; size: number; tone: 'done' | 'todo' | 'can' }) {
-  const sw = 1.5 / ((size / 100) * 0.56)
+type Tone = 'done' | 'todo' | 'can'
+
+/**
+ * 長條章：只有字（2026-11-20 Chris 定，取代圖案章）。
+ * 可以蓋 = 白文（實心印泥紅、紙色字）；蓋過 = 朱文（紅框紅字，雙線框）；沒去過 = 墨藍虛線框。
+ */
+function TextSeal({ name, font, tone }: { name: string; font: number; tone: Tone }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" className={`seal seal-${tone}`}>
-      <path
-        d="M30 3H70L97 30V70L70 97H30L3 70V30Z"
-        fill={tone === 'todo' ? 'var(--paper)' : 'var(--card)'}
-        stroke="currentColor"
-        strokeWidth={tone === 'todo' ? 150 / size : 220 / size}
-        strokeDasharray={tone === 'todo' ? `${700 / size} ${520 / size}` : undefined}
-        strokeLinejoin="round"
-      />
-      <g transform="translate(22 21) scale(0.56)" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" opacity={tone === 'todo' ? 0.55 : 1}>
-        <path d={PICTOS[pictoFor(spot.kind, spot.id)]} />
-      </g>
-    </svg>
+    <span className={`tseal tseal-${tone}`} style={{ fontSize: font, padding: `${SEAL_PAD_Y}px ${SEAL_PAD_X}px`, letterSpacing: `${SEAL_TRACK}em` }}>
+      {name}
+    </span>
   )
 }
 
@@ -125,7 +123,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const fix = state.k === 'done' ? state.fix : null
   const data = useMemo(() => (fix ? radarSpots(fix) : null), [fix])
   const center = data?.center ?? null
-  const layout = useMemo(() => (data ? layoutRadar(data, pad.w, pad.h, center ? CENTER_AT : CENTER_ME) : null), [data, pad, center])
+  const atBox = center ? centerAt(center.spot) : null
+  const layout = useMemo(() => (data ? layoutRadar(data, pad.w, pad.h, data.center ? centerAt(data.center.spot) : CENTER_ME) : null), [data, pad])
   const selected = layout?.placed.find((p) => p.spot.id === sel) ?? null
 
   const run = useCallback(async () => {
@@ -165,33 +164,38 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     return () => document.removeEventListener('visibilitychange', check)
   }, [active])
 
-  // 散開的動畫：每個小章從正中飛到自己的位置，近的先走；一圈波紋同時掃出去
+  // 浮現（像雷達找到東西）：一圈波紋從正中慢慢掃出去，掃到哪個章，那個章就在原地從紙底下慢慢透出來
+  // （由淡、由模糊、由略低一點，到清楚），不飛、不彈。近的先出現。
   const radarRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     const root = radarRef.current
     if (!root || !layout || round === 0 || reduceMotion()) return
-    const SWEEP = 1100
+    const SWEEP = 2000
     root.querySelector('.sweep')?.animate(
       [
-        { transform: 'scale(0.02)', opacity: 0.55 },
+        { transform: 'scale(0.02)', opacity: 0.5 },
         { transform: 'scale(1)', opacity: 0 },
       ],
-      { duration: SWEEP, easing: 'cubic-bezier(.2,.6,.35,1)' },
+      { duration: SWEEP, easing: 'linear' },
     )
-    root.querySelectorAll<HTMLElement>('.rs').forEach((el) => {
-      const x = Number(el.dataset.x)
-      const y = Number(el.dataset.y)
-      const r = Number(el.dataset.r)
+    const emerge = (el: Element, delay: number) =>
       el.animate(
         [
-          { transform: `translate(${-x}px, ${-y}px) scale(0.2)`, opacity: 0 },
-          { transform: 'none', opacity: 1 },
+          { opacity: 0, filter: 'blur(6px)', transform: 'translateY(8px)' },
+          { opacity: 0.35, filter: 'blur(3px)', transform: 'translateY(4px)', offset: 0.35 },
+          { opacity: 1, filter: 'blur(0)', transform: 'none' },
         ],
-        { duration: 700, delay: 120 + (r / layout.R) * (SWEEP - 250), easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'backwards' },
+        { duration: 1400, delay, easing: 'cubic-bezier(.3,.5,.3,1)', fill: 'backwards' },
       )
+    root.querySelectorAll<HTMLElement>('.rs').forEach((el) => {
+      // 波紋走到這個章的半徑時開始透出來（波紋是勻速的，所以時間跟半徑成正比）
+      const r = Number(el.dataset.r)
+      emerge(el, Math.max(0, (r / (layout.R + 20)) * SWEEP - 150))
     })
+    const at = root.querySelector('.at')
+    if (at) emerge(at, 0)
     root.querySelectorAll<HTMLElement>('.ring, .ring-text, .north').forEach((el) =>
-      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 300, fill: 'backwards' }),
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: 400, fill: 'backwards' }),
     )
     // 只在新讀到位置時播，排版因為紙面大小改變而重算時不播
   }, [round])
@@ -266,12 +270,17 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
           )}
 
           {/* 正中：可以蓋的大章，或者你的位置點 */}
-          {center && fix ? (
-            <button type="button" className="at" onClick={() => stamp(center)} aria-label={`你已到達${center.spot.name}，按一下蓋章`}>
+          {center && fix && atBox ? (
+            <button
+              type="button"
+              className="at"
+              style={{ left: -atBox.w / 2, top: -atBox.h / 2, width: atBox.w, height: atBox.h }}
+              onClick={() => stamp(center)}
+              aria-label={`你已到達${center.spot.name}，按一下蓋章`}
+            >
               <span className="arrive" aria-hidden="true" />
               <span className="at-top">你已到達</span>
-              <MiniSeal spot={center.spot} size={AT_SIZE} tone="can" />
-              <span className="at-name">{shortName(center.spot.name)}</span>
+              <TextSeal name={shortName(center.spot.name)} font={AT_FONT} tone="can" />
               <span className="at-hint">
                 {just?.spotId === center.spot.id ? (just.test ? '測試章已蓋好 · 可以再蓋' : `No. ${just.no} 已蓋好 · 可以再蓋`) : timesBySpot[center.spot.id] ? `第 ${timesBySpot[center.spot.id] + 1} 次來 · 按一下蓋章` : '第一次來 · 按一下蓋章'}
               </span>
@@ -355,20 +364,17 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   )
 }
 
-function RadarStamp({ p, tone, selected, onClick }: { p: Placed; tone: 'done' | 'todo' | 'can'; selected: boolean; onClick: () => void }) {
+function RadarStamp({ p, tone, selected, onClick }: { p: Placed; tone: Tone; selected: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       className={`rs rs-${tone}${p.almost ? ' rs-almost' : ''}${selected ? ' sel' : ''}`}
-      style={{ left: p.x - p.w / 2, top: p.y - p.size / 2, width: p.w, transformOrigin: `${p.w / 2}px ${p.size / 2}px` }}
-      data-x={p.x}
-      data-y={p.y}
+      style={{ left: p.x - p.w / 2, top: p.y - p.h / 2, width: p.w, height: p.h }}
       data-r={p.r}
       onClick={onClick}
       aria-label={`${p.spot.name}，${p.can ? '在範圍裏，可以蓋章' : `距離 ${dist(p.d)}`}`}
     >
-      <MiniSeal spot={p.spot} size={p.size} tone={tone} />
-      <span className="rs-name">{shortName(p.spot.name)}</span>
+      <TextSeal name={shortName(p.spot.name)} font={p.font} tone={tone} />
     </button>
   )
 }

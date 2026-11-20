@@ -4,7 +4,7 @@
 // · 離中心越遠 = 實際越遠。景點由幾十米到幾十公里都有，所以距離用對數壓縮：近處拉開、遠處收攏，
 //   但先後次序不變（近的一定比遠的靠中間）。
 // · 已經在範圍裏（可以蓋章）的最近那個放在正中，其他的圍着它。
-// · 小印章互相疊住時，往旁邊推開一點（方向會偏一點點，次序大致不變）。
+// · 長條章（只有字）不准互相疊住：近的先放在真實位置，後面的放不下就挪到附近最近的空位（方向盡量不變）。
 import { SPOTS, type Spot } from './districts'
 import { ACC_LIMIT, type Fix } from './locate'
 import { ALMOST } from './where'
@@ -63,12 +63,12 @@ export interface Placed extends RadarSpot {
   /** 章的中心（像素，相對雷達中心） */
   x: number
   y: number
-  /** 章的大小（像素）：越近越大 */
-  size: number
-  /** 名字佔多寬 / 多高（一行或兩行） */
+  /** 字的大小（像素）：越近越大 */
+  font: number
+  /** 長條章的寬 / 高 */
   w: number
-  labelH: number
-  /** 按距離算出來、還沒推開時離中心多遠（出場動畫按這個先後） */
+  h: number
+  /** 按距離算出來、還沒推開時離中心多遠（浮現的先後按這個） */
   r: number
 }
 
@@ -80,14 +80,21 @@ export interface RadarLayout {
   rings: { r: number; text: string; lx: number; ly: number }[]
 }
 
-const LABEL_FONT = 11
-const LABEL_LINE = 13
-const MAX_CHARS = 6
+/** 長條章（只有字）：字距 0.12em，左右各留 10 像素，框 1.5 像素 */
+export const SEAL_PAD_X = 10
+export const SEAL_PAD_Y = 5
+export const SEAL_TRACK = 0.12
+/** 估算一行字多寬：中文一個字一格，英文數字約 0.6 格 */
+export const textWidth = (s: string, font: number) => [...s].reduce((w, c) => w + (c.charCodeAt(0) > 0x2e80 ? 1 : 0.62) * font + SEAL_TRACK * font, 0)
+export const sealSize = (name: string, font: number) => ({
+  w: Math.ceil(textWidth(name, font) + SEAL_PAD_X * 2 + 3),
+  h: Math.ceil(font * 1.3 + SEAL_PAD_Y * 2 + 3),
+})
 
-/** W、H：紙面的寬高；centerBox：正中那個東西（你的位置點，或者可以蓋的大章）佔多大 */
-export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { w: number; h: number; oy: number }): RadarLayout {
-  const R = Math.max(100, Math.min(W / 2 - 30, H / 2 - 44))
-  const rMin = Math.max(centerBox.w, centerBox.h) / 2 + 26
+/** W、H：紙面的寬高；centerBox：正中那個東西（你的位置點，或者可以蓋的大章連上下的字）佔多大 */
+export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { w: number; h: number }): RadarLayout {
+  const R = Math.max(100, Math.min(W / 2 - 24, H / 2 - 40))
+  const rMin = Math.min(centerBox.w, centerBox.h) / 2 + 30
   const items = data.around
   const lo = 60
   const hi = Math.max(1500, ...items.map((x) => x.d))
@@ -96,11 +103,10 @@ export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { 
   const n = items.length
   const placed: Placed[] = items.map((it, i) => {
     const r = it.can ? rMin : scale(it.d)
-    const size = Math.round(50 - (n > 1 ? i / (n - 1) : 0) * 14)
-    const chars = shortName(it.spot.name).length
-    const lines = chars > MAX_CHARS ? 2 : 1
-    const w = Math.max(size, Math.min(chars, MAX_CHARS) * LABEL_FONT + 4)
-    return { ...it, r, size, w, labelH: lines * LABEL_LINE, x: r * Math.sin(it.bearing), y: -r * Math.cos(it.bearing) }
+    // 最近的 15 像素，最遠的 11.5 像素
+    const font = Math.round((15 - (n > 1 ? i / (n - 1) : 0) * 3.5) * 2) / 2
+    const { w, h } = sealSize(shortName(it.spot.name), font)
+    return { ...it, r, font, w, h, x: r * Math.sin(it.bearing), y: -r * Math.cos(it.bearing) }
   })
 
   // 比例圈：選在中間和最外圈之間的幾個整數距離，彼此至少隔 34 像素，最多 3 個；字寫在右下方
@@ -114,62 +120,47 @@ export function layoutRadar(data: RadarData, W: number, H: number, centerBox: { 
   }
   while (rings.length > 3) rings.splice(1, 1)
 
-  // 小章不准壓住的東西：正中那個、頂上的「北」、比例圈的字
+  // 章不准壓住的東西：正中那個、頂上的「北」、比例圈的字
   const obstacles = [
-    { x: 0, y: centerBox.oy, w: centerBox.w, h: centerBox.h },
+    { x: 0, y: 0, w: centerBox.w, h: centerBox.h },
     { x: 0, y: -R - 11, w: 22, h: 20 },
     ...rings.map((g) => ({ x: g.lx, y: g.ly, w: g.text.length * 7 + 14, h: 16 })),
   ]
 
-  // 互相疊住就推開：每個當成一個方框（章 + 下面的名字），橫或豎推最少的那邊
-  const GAP = 5
-  const boxH = (p: Placed) => p.size + 3 + p.labelH
-  const boxOy = (p: Placed) => (boxH(p) - p.size) / 2
-  const target = placed.map((p) => ({ x: p.x, y: p.y }))
-  const clamp = (p: Placed) => {
-    const mx = W / 2 - p.w / 2 - 6
-    p.x = Math.max(-mx, Math.min(mx, p.x))
-    p.y = Math.max(-H / 2 + p.size / 2 + 6, Math.min(H / 2 - (boxH(p) - p.size / 2) - 6, p.y))
+  // 排位置：近的先放，放在真實的方向和距離上；放不下（會疊住別的章或上面的字）就在附近找最近的空位，
+  // 同樣近的空位裏優先保住方向。這樣一定不會疊，越近的越準。
+  const GAP = 6
+  const boxes: { x: number; y: number; w: number; h: number }[] = [...obstacles]
+  const fits = (x: number, y: number, w: number, h: number) => {
+    if (Math.abs(x) > W / 2 - w / 2 - 6 || Math.abs(y) > H / 2 - h / 2 - 6) return false
+    return boxes.every((b) => Math.abs(x - b.x) >= (w + b.w) / 2 + GAP || Math.abs(y - b.y) >= (h + b.h) / 2 + GAP)
   }
-  for (let it = 0; it < 220; it++) {
-    for (let i = 0; i < placed.length; i++) {
-      const a = placed[i]
-      for (let j = i + 1; j < placed.length; j++) {
-        const b = placed[j]
-        const dx = b.x - a.x
-        const dy = b.y + boxOy(b) - (a.y + boxOy(a))
-        const ox = (a.w + b.w) / 2 + GAP - Math.abs(dx)
-        const oy = (boxH(a) + boxH(b)) / 2 + GAP - Math.abs(dy)
-        if (ox > 0 && oy > 0) {
-          if (ox < oy) {
-            const s = ((dx >= 0 ? 1 : -1) * ox) / 2
-            a.x -= s
-            b.x += s
-          } else {
-            const s = ((dy >= 0 ? 1 : -1) * oy) / 2
-            a.y -= s
-            b.y += s
-          }
+  for (const p of placed) {
+    const tx = p.x
+    const ty = p.y
+    if (!fits(tx, ty, p.w, p.h)) {
+      let best: { x: number; y: number; score: number } | null = null
+      for (let k = 1; k <= 90 && !best; k++) {
+        const rad = k * 4
+        const steps = Math.max(12, Math.round((2 * Math.PI * rad) / 6))
+        for (let s = 0; s < steps; s++) {
+          const a = (2 * Math.PI * s) / steps
+          const x = tx + rad * Math.cos(a)
+          const y = ty + rad * Math.sin(a)
+          if (!fits(x, y, p.w, p.h)) continue
+          // 偏離真實方向多少（從中心看）
+          let da = Math.abs(Math.atan2(x, -y) - p.bearing)
+          if (da > Math.PI) da = 2 * Math.PI - da
+          const score = rad + da * 40
+          if (!best || score < best.score) best = { x, y, score }
         }
       }
-      for (const o of obstacles) {
-        const dx = a.x - o.x
-        const dy = a.y + boxOy(a) - o.y
-        const ox = (a.w + o.w) / 2 + GAP - Math.abs(dx)
-        const oy = (boxH(a) + o.h) / 2 + GAP - Math.abs(dy)
-        if (ox > 0 && oy > 0) {
-          if (ox < oy) a.x += (dx >= 0 ? 1 : -1) * ox
-          else a.y += (dy >= 0 ? 1 : -1) * oy
-        }
+      if (best) {
+        p.x = best.x
+        p.y = best.y
       }
     }
-    // 前面大部分回合輕輕拉回原本的方向和距離，最後幾十回合只推開
-    const pull = it < 180 ? 0.04 : 0
-    placed.forEach((p, i) => {
-      p.x += (target[i].x - p.x) * pull
-      p.y += (target[i].y - p.y) * pull
-      clamp(p)
-    })
+    boxes.push({ x: p.x, y: p.y, w: p.w, h: p.h })
   }
 
   return { placed, R, rings }

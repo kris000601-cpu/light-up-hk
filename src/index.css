@@ -2235,14 +2235,12 @@ button.me:active .me-dot {
   opacity: 0;
 }
 
-/* 小印章：越近越大；蓋過 = 紅，沒去過 = 墨藍虛線，就在範圍裏 = 紅 + 一圈 */
+/* 長條章（只有字）：越近字越大。可以蓋 = 白文（實心印泥紅）；蓋過 = 朱文（紅框紅字、雙線框）；沒去過 = 墨藍虛線框 */
 .rs {
   position: absolute;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
+  display: grid;
+  place-items: center;
   padding: 0;
   border: 0;
   background: none;
@@ -2253,94 +2251,90 @@ button.me:active .me-dot {
   /* 手指好按：點擊範圍比看起來大一點 */
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -7px -4px;
 }
-.seal {
+.tseal {
   display: block;
-  overflow: visible;
+  box-sizing: border-box;
+  border: 1.5px solid currentColor;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  background: var(--paper);
+  transition: box-shadow 0.2s ease;
 }
-.seal-todo {
+.tseal-todo {
   color: var(--navy);
+  border-width: 1.2px;
+  border-style: dashed;
 }
-.seal-done,
-.seal-can {
-  color: var(--seal);
-}
-.rs-name {
-  width: 100%;
-  font-size: 11px;
-  line-height: 13px;
-  text-align: center;
-  color: var(--ink);
-}
-.rs-todo .rs-name {
-  color: var(--sub);
-}
-.rs-can .rs-name,
-.rs-done .rs-name {
+.tseal-done {
   color: var(--seal-text);
+  border-color: var(--seal);
+  /* 朱文章的雙線框：裏面再一條細線 */
+  outline: 0.8px solid var(--seal);
+  outline-offset: -4.5px;
 }
-.rs-can .seal {
-  animation: canPulse 2s ease-in-out infinite;
+.tseal-can {
+  color: var(--card);
+  background: var(--seal);
+  border-color: var(--seal);
+  outline: 0.8px solid var(--card);
+  outline-offset: -4.5px;
 }
-@keyframes canPulse {
+.rs-can .tseal {
+  animation: canGlow 2.2s ease-in-out infinite;
+}
+@keyframes canGlow {
   50% {
-    transform: scale(1.06);
+    box-shadow: 0 0 0 4px rgba(185, 71, 58, 0.18);
   }
 }
-.rs.sel .rs-name {
-  font-weight: 700;
-  color: var(--ink);
+.rs.sel .tseal {
+  box-shadow: 0 0 0 3px rgba(45, 62, 92, 0.22);
 }
-.rs.sel .seal {
-  transform: scale(1.12);
+.rs:active .tseal {
+  box-shadow: 0 0 0 3px rgba(45, 62, 92, 0.3);
 }
 
-/* 正中：已經在範圍裏的那個，大一號，到達那一刻亮一圈印泥紅（像 Pokémon GO 走進補給站） */
+/* 正中：已經在範圍裏的那個，大一號的實心紅章；到達那一刻亮一圈印泥紅（像 Pokémon GO 走進補給站） */
 .at {
   position: absolute;
-  left: -75px;
-  top: -66px;
   z-index: 2;
-  width: 150px;
   padding: 0;
   border: 0;
   background: none;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   color: var(--ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.at-top {
+.at-top,
+.at-hint {
   height: 16px;
-  margin-bottom: 4px;
   font-size: 12px;
   line-height: 16px;
+  white-space: nowrap;
+  color: var(--seal-text);
+}
+.at-top {
   letter-spacing: 4px;
   font-weight: 700;
-  color: var(--seal-text);
 }
-.at-name {
-  margin-top: 4px;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 19px;
-  letter-spacing: 2px;
-  line-height: 1.3;
+.at .tseal {
+  animation: canGlow 2.2s ease-in-out infinite;
 }
-.at-hint {
-  font-size: 12px;
-  color: var(--seal-text);
-}
-.at:active .seal {
-  transform: scale(0.96);
+.at:active .tseal {
+  box-shadow: 0 0 0 5px rgba(185, 71, 58, 0.28);
 }
 .arrive {
   position: absolute;
   left: 50%;
-  top: 66px;
+  top: 50%;
   width: 260px;
   height: 260px;
   margin: -130px 0 0 -130px;
@@ -2348,7 +2342,7 @@ button.me:active .me-dot {
   border: 2px solid var(--seal);
   opacity: 0;
   pointer-events: none;
-  animation: arrive 1.6s ease-out 0.25s 1;
+  animation: arrive 1.8s ease-out 0.6s 1;
 }
 @keyframes arrive {
   0% {
