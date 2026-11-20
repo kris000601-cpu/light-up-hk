@@ -133,7 +133,7 @@ export type Layer =
   | { k: 'face' } // 凸紋表面
   | { k: 'wet' } // 剛蓋好的濕墨
   | { k: 'dry'; thr: number | null } // 變乾的其中一層
-  | { k: 'old'; seed?: number; angle?: number } // 以前蓋的章（已經乾透）
+  | { k: 'old'; seed?: number; angle?: number; lite?: boolean } // 以前蓋的章（已經乾透）；lite = 縮圖用，不加紙紋（小圖看不出，省掉濾鏡手機更順）
 
 /** 章的一層（210 × 170 的 SVG，放在 230 × 190 的框裏，四周留 10 像素） */
 export function StampLayer({ f, layer }: { f: FaceData; layer: Layer }) {
@@ -154,6 +154,8 @@ export function StampLayer({ f, layer }: { f: FaceData; layer: Layer }) {
     )
   } else if (layer.k === 'hi' || layer.k === 'face') {
     body = <FaceBody f={f} c={layer.k === 'hi' ? '#FFFFFF' : FACE} />
+  } else if (layer.k === 'old' && layer.lite) {
+    body = <FaceBody f={f} c={DRY} />
   } else if (layer.k === 'old') {
     defs = (
       <>
@@ -215,10 +217,10 @@ export function StampLayer({ f, layer }: { f: FaceData; layer: Layer }) {
 }
 
 /** 一個已經乾透的章（印章冊、蓋章頁上以前的章用） */
-export function DryStamp({ f, style, seed, angle }: { f: FaceData; style?: CSSProperties; seed?: number; angle?: number }) {
+export function DryStamp({ f, style, seed, angle, lite }: { f: FaceData; style?: CSSProperties; seed?: number; angle?: number; lite?: boolean }) {
   return (
     <div className="stamp-box" style={style}>
-      <StampLayer f={f} layer={{ k: 'old', seed, angle }} />
+      <StampLayer f={f} layer={{ k: 'old', seed, angle, lite }} />
     </div>
   )
 }

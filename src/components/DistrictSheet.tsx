@@ -1,15 +1,25 @@
-import { label, type District } from '../lib/districts'
+import { useMemo } from 'react'
+import { label, useCountedStamps, type District } from '../lib/districts'
+import { monthDay } from '../lib/format'
+import { openBook } from '../lib/nav'
+import type { Stamp } from '../lib/stamps'
+import { EmptyOct, MiniStamp } from './BookPaper'
 import { Sheet } from './Sheet'
 import { Dots } from './Dots'
-import { monthDay } from '../lib/format'
 
 interface Props {
   district: District | null
   onClose: () => void
 }
 
-/** 區詳情：這個區的景點，哪些蓋過了 */
+/** 區詳情：這個區的景點。蓋過章的左邊是最近那一枚（照蓋的角度），按一下跳到印章冊那一頁；沒去過的是虛線章位 */
 export function DistrictSheet({ district, onClose }: Props) {
+  const stamps = useCountedStamps()
+  const bySpot = useMemo(() => {
+    const m: Record<string, Stamp[]> = {}
+    for (const s of stamps) (m[s.spotId] ??= []).push(s)
+    return m
+  }, [stamps])
   if (!district) return <Sheet open={false} label="" onClose={onClose}>{null}</Sheet>
   const d = district
   return (
@@ -25,22 +35,41 @@ export function DistrictSheet({ district, onClose }: Props) {
         </span>
         <Dots visited={d.visited} total={d.total} level={d.level} />
       </div>
-      <ul className="spot-list">
+      <ul className="spot-list rd">
         {d.spots.map((s) => {
-          const st = d.done[s.id]
-          const done = !!st
+          const list = bySpot[s.id] ?? []
+          const last = list.at(-1)
+          const text = (
+            <span className="spot-text">
+              <span className="spot-name">{s.name}</span>
+              <span className="spot-tip">
+                {s.area} · {s.tip}
+              </span>
+            </span>
+          )
           return (
-            <li key={s.id} className={done ? 'spot done' : 'spot'}>
-              <span className="spot-mark" aria-hidden="true">
-                {done ? '章' : ''}
-              </span>
-              <span className="spot-text">
-                <span className="spot-name">{s.name}</span>
-                <span className="spot-tip">
-                  {s.area} · {s.tip}
-                </span>
-              </span>
-              <span className="spot-state">{st ? `${st.test ? '測試 · ' : ''}${monthDay(st.at)}` : '未去過'}</span>
+            <li key={s.id}>
+              {last ? (
+                <button type="button" className="spot done" onClick={() => openBook(s.id)} aria-label={`${s.name}：看印章冊那一頁`}>
+                  <span className="spot-mark2">
+                    <MiniStamp stamp={last} width={62} />
+                  </span>
+                  {text}
+                  <span className="spot-state">
+                    {last.test ? '測試 · ' : ''}
+                    {monthDay(last.at)}
+                    {list.length > 1 ? ` · ${list.length} 次` : ''}
+                  </span>
+                </button>
+              ) : (
+                <div className="spot">
+                  <span className="spot-mark2">
+                    <EmptyOct width={46} />
+                  </span>
+                  {text}
+                  <span className="spot-state">未去過</span>
+                </div>
+              )}
             </li>
           )
         })}

@@ -12,6 +12,7 @@ import { formatDistance, type Fix } from '../lib/locate'
 import { addStamp, useStamps, type Stamp } from '../lib/stamps'
 import { useTestMode } from '../lib/testMode'
 import { holdUpdates } from '../lib/updates'
+import { placeStamps } from '../lib/book'
 import { DRY_THRESHOLDS, DryStamp, StampLayer, faceOf } from './StampArt'
 
 interface Props {
@@ -392,23 +393,8 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
   }
   input.current = { start, finish, dbg }
 
-  // ---------- 這一頁以前蓋過的章（乾的樣子） ----------
-  // 早期的章（第 3 步直接蓋的、測試工具蓋的）沒有記位置：分散放在幾個固定位置，免得全疊在正中間糊成一團
-  const SLOTS: [number, number, number][] = [
-    [0.36, 0.34, -4],
-    [0.64, 0.52, 3],
-    [0.4, 0.6, -2],
-    [0.62, 0.32, 5],
-    [0.5, 0.46, -6],
-  ]
-  let slot = 0
-  const olds = before.map((b, i) => {
-    const fallback = b.px == null ? SLOTS[slot++ % SLOTS.length] : null
-    const px = b.px ?? fallback![0], py = b.py ?? fallback![1]
-    const rot = b.rot ?? fallback?.[2] ?? 0
-    const f = faceOf({ at: b.at, no: b.test ? null : b.no, name: spot.name, district: label(d), kind: spot.kind, spotId: spot.id })
-    return { key: b.uid ?? b.id, f, px, py, rot, seed: 11 + (i % 5) }
-  })
+  // ---------- 這一頁以前蓋過的章（乾的樣子，位置跟印章冊一樣算） ----------
+  const olds = placeStamps(before)
 
   const done = phase === 'done'
   const showGuide = !done && !guided
@@ -473,8 +459,8 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
         <div className="sp-layers" aria-hidden="true">
           {olds.map((o) => (
             <DryStamp
-              key={o.key}
-              f={o.f}
+              key={o.stamp.uid ?? o.stamp.id}
+              f={o.face}
               seed={o.seed}
               style={{ left: `calc(${(o.px * 100).toFixed(2)}% - 115px)`, top: `calc(${(o.py * 100).toFixed(2)}% - 95px)`, transform: `rotate(${o.rot}deg)`, opacity: 0.4 } as CSSProperties}
             />

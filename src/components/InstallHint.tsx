@@ -30,11 +30,14 @@ export function InstallSteps() {
 }
 
 /** 首頁頂部的提示卡：還沒從主畫面打開時出現，可以按「稍後」收起三天 */
+const MOCK = new URLSearchParams(window.location.search).get('mock') === '1'
+
 export function InstallHint() {
   const [hidden, setHidden] = useState(hintHidden)
   const { installedNow } = useInstallPrompt()
   const p = platform()
-  if (hidden || installedNow || p === 'installed' || p === 'desktop') return null
+  // 設計稿截圖（?mock=1）不顯示
+  if (hidden || installedNow || p === 'installed' || p === 'desktop' || MOCK) return null
   return (
     <aside className="install-hint" aria-label="加到主畫面">
       <div className="install-hint-text">

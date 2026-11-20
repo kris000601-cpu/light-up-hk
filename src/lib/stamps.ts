@@ -114,12 +114,21 @@ function transact<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore, done: (v
 const byTime = (a: Stamp, b: Stamp) => a.at - b.at || a.id - b.id
 const READ_ERROR = '讀取不到印章。如果開了無痕模式，請改用一般模式打開；否則按「再試一次」。'
 
+// 設計稿截圖用：網址加 ?mock=1，用一套假印章代替手機裏的（不讀也不寫數據庫）
+let mocked = false
+export function mockStamps(list: Stamp[]) {
+  mocked = true
+  set({ ready: true, stamps: [...list].sort(byTime), error: null })
+}
+
 /** 從數據庫重新讀一次（打開 App、回到前台、出錯重試時） */
 export async function reloadStamps() {
+  if (mocked) return
   try {
     const all = await transact<Stamp[]>('readonly', (s, done) => {
       s.getAll().onsuccess = (e) => done((e.target as IDBRequest<Stamp[]>).result)
     })
+    if (mocked) return
     set({ ready: true, stamps: all.sort(byTime), error: null })
     // 之前沒批的，這次可能會批（例如剛加到主畫面）
     if (all.length) requestPersist()

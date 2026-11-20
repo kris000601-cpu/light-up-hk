@@ -568,26 +568,6 @@ button {
   border-bottom: 0;
 }
 
-.spot-mark {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border: 1.5px dashed var(--hair);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 14px;
-}
-
-.spot.done .spot-mark {
-  border: 1.5px solid var(--seal);
-  color: var(--seal);
-  transform: rotate(-6deg);
-}
-
 .spot-text {
   flex-grow: 1;
   min-width: 0;
@@ -1668,4 +1648,334 @@ button:disabled {
   color: var(--sub);
   pointer-events: none;
   word-break: break-all;
+}
+
+/* ---------- 印章冊 ---------- */
+/* 一頁紙：寬度跟外面，章在裏面按 358 × 372 的邏輯尺寸放，整張縮放 */
+.paper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.paper.ruled {
+  border-top: 1px solid var(--hair);
+  border-bottom: 1px solid var(--hair);
+}
+.paper-inner {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.mini-stamp {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+.mini-stamp-in {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 230px;
+  height: 190px;
+  transform-origin: 0 0;
+}
+.empty-oct {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  color: var(--hair);
+}
+.empty-oct svg {
+  position: absolute;
+  inset: 0;
+}
+.empty-oct-mark {
+  position: relative;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--sub);
+}
+
+.book-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+.book-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--navy);
+}
+.book-stats {
+  font-size: 13px;
+  color: var(--sub);
+}
+.book-empty {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  color: var(--sub);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* 一頁的內容 */
+.pv {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pv-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pv-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 25px;
+  letter-spacing: 2px;
+  line-height: 1.3;
+}
+.pv-sub {
+  font-size: 13px;
+  color: var(--sub);
+}
+.pv-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--sub);
+}
+/* 疊了幾個章的紙：按一下逐個看 */
+.pv-paper-tap {
+  cursor: pointer;
+  outline: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pv-paper-tap:focus-visible {
+  box-shadow: 0 0 0 2px var(--navy);
+}
+.pv-hint {
+  margin: -4px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--sub);
+}
+.pv-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pv-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 8px;
+  border: 0;
+  border-bottom: 1px solid #d6d3ca;
+  border-radius: 0;
+  background: none;
+  font-size: 13px;
+  text-align: left;
+}
+button.pv-row {
+  cursor: pointer;
+}
+.pv-log li:last-child .pv-row {
+  border-bottom: 0;
+}
+.pv-row.on {
+  background: rgba(45, 62, 92, 0.08);
+  border-radius: 6px;
+}
+.pv-no {
+  font-weight: 700;
+  color: var(--seal-text);
+  letter-spacing: 0.5px;
+}
+.pv-date {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.pv-nth {
+  color: var(--sub);
+  font-size: 12px;
+}
+
+/* 翻頁 */
+.flip-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.flip-count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--sub);
+}
+.flip-toc {
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--navy);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.flip-nav {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.flip-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--navy);
+  border-radius: 22px;
+  background: var(--card);
+  color: var(--navy);
+  cursor: pointer;
+}
+.flip-btn:disabled {
+  border-color: var(--hair);
+  color: var(--hair);
+  cursor: default;
+}
+.flip-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+.flip-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--hair);
+}
+.flip-dots span.on {
+  width: 16px;
+  background: var(--navy);
+}
+.flip-of {
+  font-size: 14px;
+  color: var(--sub);
+  font-variant-numeric: tabular-nums;
+}
+.flip-hint {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+/* 目錄（完整的一頁） */
+.toc-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: -12px 0 6px -12px;
+}
+.toc-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 10px;
+}
+.toc-tile {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+}
+.tile-paper {
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--hair);
+}
+.toc-tile.on .tile-paper {
+  border: 1.5px solid var(--navy);
+}
+.tile-no {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--sub);
+}
+.tile-name {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 區詳情：每個景點的章 */
+.rd .spot {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #d6d3ca;
+  background: none;
+  text-align: left;
+}
+.rd button.spot {
+  cursor: pointer;
+}
+.rd li:last-child .spot {
+  border-bottom: 0;
+}
+.spot-mark2 {
+  flex: none;
+  width: 66px;
+  display: grid;
+  place-items: center;
+}
+
+/* 設計稿截圖（?mock=1）：不要動畫，一打開就是最後的樣子 */
+.mock *,
+.mock *::before,
+.mock *::after {
+  animation: none !important;
+  transition: none !important;
 }
