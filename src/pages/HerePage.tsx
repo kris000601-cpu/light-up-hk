@@ -303,15 +303,24 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
       ],
       { duration: SWEEP, easing: 'linear' },
     )
-    const emerge = (el: Element, delay: number) =>
-      el.animate(
+    // 等待（delay）直接寫進動畫的前一段（一直透明），不靠 delay + fill: 'backwards'：
+    // iPhone 上那樣做等待期間不一定是透明的，CSS 的淡入（.rs .ink）會先把章顯示出來，
+    // 等到動畫開始又從透明重來 → 章「虛一下、消失、再浮現」（Chris 2026-11-22）
+    const EASE = 'cubic-bezier(.3,.5,.3,1)'
+    const emerge = (el: Element, delay: number) => {
+      ;(el as HTMLElement).style.animation = 'none' // 關掉 CSS 的淡入，只用這一個
+      const total = delay + 1400
+      const d = delay / total
+      return el.animate(
         [
-          { opacity: 0, filter: 'blur(5px)' },
-          { opacity: 0.4, filter: 'blur(2.5px)', offset: 0.35 },
-          { opacity: 1, filter: 'blur(0px)' },
+          { opacity: 0, filter: 'blur(5px)', offset: 0 },
+          { opacity: 0, filter: 'blur(5px)', offset: d, easing: EASE },
+          { opacity: 0.4, filter: 'blur(2.5px)', offset: d + (1 - d) * 0.35, easing: EASE },
+          { opacity: 1, filter: 'blur(0px)', offset: 1 },
         ],
-        { duration: 1400, delay, easing: 'cubic-bezier(.3,.5,.3,1)', fill: 'backwards' },
+        { duration: total },
       )
+    }
     root.querySelectorAll<HTMLElement>('.rs').forEach((el) => {
       // 波紋走到這個章的半徑時開始透出來（波紋是勻速的，所以時間跟半徑成正比）
       const r = Number(el.dataset.r)
@@ -320,7 +329,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     })
     root.querySelectorAll('.at-top, .at .ink, .at-hint').forEach((el) => emerge(el, 0))
     root.querySelectorAll<HTMLElement>('.north').forEach((el) =>
-      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: 400, fill: 'backwards' }),
+      el.animate([{ opacity: 0 }, { opacity: 0, offset: 0.25 }, { opacity: 1 }], { duration: 1600 }),
     )
     // 只在新讀到位置時播，排版因為紙面大小改變而重算時不播
   }, [round])
