@@ -11,7 +11,6 @@ import { monthDay } from '../lib/format'
 import { FIX_TTL, SETTLE, formatDistance, startLocate, type Fix, type LocateError, type LocateHandlers } from '../lib/locate'
 import { RADAR_N, SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
 import { navToSpot } from '../lib/where'
-import { distance } from '../lib/range'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
 import { getFakeLocation } from '../lib/testMode'
@@ -152,7 +151,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const [slow, setSlow] = useState(false) // 定位超過 4.5 秒還沒有結果：正中下面說一句，免得以為卡住了
   const [refining, setRefining] = useState(false) // 已經出了結果，同一次按壓裏還在變準
   // 排位置用的那個位置：第一次出結果時定下；之後變準只更新顏色和距離，章留在原位不跳，
-  // 只有正中換了（例如變準之後發現你已經到了）、或者位置挪了超過 50 米才重排
+  // 只有正中換了（變準之後發現你已經到了）才重排。位置挪多少都不重排（Chris 2026-11-22：雷達只是大概方向，章一出來就定住）
   const [basis, setBasis] = useState<{ fix: Fix; centerId: string | null } | null>(() => {
     const st = mockState()
     return st.k === 'done' ? { fix: st.fix, centerId: null } : null
@@ -235,8 +234,8 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
         for (const x of [d.center, ...d.around]) if (x?.can) arrivedRef.current.add(x.spot.id)
         const centerId = d.center?.spot.id ?? null
         setState({ k: 'done', fix: f })
-        // 章留在原位，除非正中換了、或者位置挪了超過 50 米（第一個位置偏得遠）：那就重排，章慢慢滑到新位置
-        setBasis((b) => (b && b.centerId === centerId && distance(b.fix.lat, b.fix.lng, f.lat, f.lng) <= 50 ? b : { fix: f, centerId }))
+        // 章一出來就定住：位置變準只在後台更新能不能蓋、距離，不換章、不挪位。只有正中換了（發現你已經到了）才重排
+        setBasis((b) => (b && b.centerId === centerId ? b : { fix: f, centerId }))
         if (first) {
           first = false
           clearTimeout(slowTimer)
