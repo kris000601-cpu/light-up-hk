@@ -109,11 +109,13 @@ const centerAt = (spot: Spot) => {
   return { w, h: s.h + 2 * (AT_LINE + AT_GAP), seal: s }
 }
 
-type Tone = 'done' | 'todo' | 'can'
+type Tone = 'todo' | 'can'
 
 /**
  * 長條章：只有字（2026-11-20 Chris 定，取代圖案章）。
- * 可以蓋 = 白文（實心印泥紅、紙色字）；蓋過 = 朱文（紅框紅字，雙線框）；沒去過 = 墨藍虛線框。
+ * 只分兩種（2026-11-23 Chris 定）：可以蓋 = 白文（實心印泥紅、紙色字）；其他不管去沒去過 = 墨藍虛線框。
+ * 以前「蓋過」是朱文紅框，但紅色同時表示「能蓋」和「蓋過」容易看錯；印泥紅只留給「現在可以蓋」。
+ * 蓋過幾次在按開的小卡片裏看。
  */
 function TextSeal({ name, font, tone, w, h }: { name: string; font: number; tone: Tone; w: number; h: number }) {
   // 三層：
@@ -348,7 +350,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   }
   const closeStamp = useCallback(() => setStampAt(null), [])
 
-  const tone = (it: RadarSpot) => (it.can ? 'can' : timesBySpot[it.spot.id] ? 'done' : 'todo')
+  const tone = (it: RadarSpot): Tone => (it.can ? 'can' : 'todo')
   const k = state.k
 
   return (
