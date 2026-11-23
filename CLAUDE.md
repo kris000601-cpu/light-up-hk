@@ -1,6 +1,6 @@
 # 點亮香港（暫定名）
 
-竪屏網頁 App（PWA）：在香港各區現場「蓋章」，把 18 區地圖一塊塊點亮。詳細背景、決定和路線圖見 `docs/HANDOFF.md`，開工前先讀。
+竪屏網頁 App（PWA）：在香港各區現場「蓋章」，把 18 區地圖一塊塊點亮。**工程全貌先讀 `docs/ENGINEERING.md`**（架構、數據、存儲格式、坑、決策、風險），每日進展見 `docs/PROGRESS.md`，全部文件清單見 `docs/FILES.md`；最初背景見 `docs/HANDOFF.md`。
 
 ## 關於用戶
 - Chris 沒有開發和設計經驗。每一步都要說明要做什麼、為什麼這樣做；要他動手的地方（裝軟件、開帳號、在手機上測試）要寫清楚步驟。
@@ -23,7 +23,8 @@
 - `data/places.csv` + `data/place-splits.csv` + `data/dcca2019.geojson`：M3 的「地方」（見路線圖 M3）。`npm run places` 生成核對頁數據。
 - `data/hk18-simplified.geojson`：舊的低精度區界，已被上面取代，只留作參考。
 - `design/`：設計稿（截圖、可以直接打開的 HTML、原始設計文件）。
-- `tools/`：數據處理腳本。
+- `tools/`：數據處理腳本。`tools/gen-files-doc.mjs` 生成 `docs/FILES.md`。
+- `docs/ENGINEERING.md`、`docs/PROGRESS.md`、`docs/FILES.md`：工程交接文檔體系（2026-11-23 建立）。**每天 23:59（香港時間）排程任務「點亮香港 · 每日工程文檔」自動更新並推送**（Claude 桌面 App 開着才會跑；沒開會在下次打開時補跑）。改架構、數據格式、存儲 schema 時，同一個提交裏順手更新 ENGINEERING.md 對應章節。
 
 ## 開發
 - Vite 8 + React 19 + TypeScript，PWA 用 vite-plugin-pwa。`npm run dev` 本機開發，`npm run build` 打包，`npm run icons` 由 `public/favicon.svg` 重新生成圖示。
