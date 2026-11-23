@@ -107,7 +107,7 @@ export function BackupCard() {
         備份
       </h2>
       <p className="block-text small">
-        備份檔案存着你所有的章：日子、地點、蓋在紙上的位置。換手機、清除了瀏覽器資料，或者想把 Safari 裏蓋的章搬到主畫面 App，都可以用它還原。
+        備份檔案存着你所有的章：日子、地點、蓋在紙上的位置。換手機、清除了瀏覽器資料，或者想把瀏覽器裏蓋的章搬到主畫面 App，都可以用它還原。
       </p>
       <p className="backup-state">
         {!ready
