@@ -19,6 +19,10 @@ const isInApp = /MicroMessenger|Instagram|FBAN|FBAV|Line\//.test(ua)
 const standalone = () =>
   window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
 
+/** iPhone 上是哪個瀏覽器：加到主畫面的按鈕位置不同（Safari 在下方 / Chrome 在網址列右邊） */
+export const iosBrowser = (): 'safari' | 'chrome' | 'other' =>
+  /CriOS/.test(ua) ? 'chrome' : /FxiOS|EdgiOS|OPiOS|GSA\//.test(ua) ? 'other' : 'safari'
+
 export const platform = (): Platform =>
   standalone() ? 'installed' : isInApp ? 'inapp' : isIOS ? 'ios' : /Android/.test(ua) ? 'android' : 'desktop'
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { hideHint, hintHidden, platform, useInstallPrompt } from '../lib/install'
+import { hideHint, hintHidden, iosBrowser, platform, useInstallPrompt } from '../lib/install'
 
 const ShareIcon = () => (
   <svg className="inline-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="分享">
@@ -12,12 +12,17 @@ const ShareIcon = () => (
 export function InstallSteps() {
   const p = platform()
   const { canPrompt, prompt } = useInstallPrompt()
-  if (p === 'ios')
+  if (p === 'ios') {
+    const b = iosBrowser()
     return (
       <p className="install-steps">
-        按 Safari 下方的分享按鈕 <ShareIcon /> → 選「加至主畫面」。之後都從主畫面的「點亮香港」打開。
+        {b === 'chrome' ? '按網址列右邊的分享按鈕 ' : b === 'other' ? '按瀏覽器的分享按鈕 ' : '按 Safari 下方的分享按鈕 '}
+        <ShareIcon /> → 選「加至主畫面」。
+        {b === 'other' ? '找不到的話，請改用 Safari 打開。' : ''}
+        之後都從主畫面的「點亮香港」打開。
       </p>
     )
+  }
   if (p === 'inapp') return <p className="install-steps">這個 App 內置的瀏覽器加不了主畫面。請按右上角「⋯」，選用 Safari 或 Chrome 打開。</p>
   if (canPrompt)
     return (
@@ -44,7 +49,7 @@ export function InstallHint() {
         <b>先加到主畫面，再開始蓋章</b>
         <p>
           {p === 'ios'
-            ? 'iPhone 上，主畫面的 App 和 Safari 是分開存印章的，所以請先加到主畫面，以後都從主畫面打開。'
+            ? 'iPhone 上，主畫面的 App 和瀏覽器是分開存印章的，所以請先加到主畫面，以後都從主畫面打開。'
             : '像 App 一樣從主畫面打開，印章也比較不容易被瀏覽器清走。'}
         </p>
         <InstallSteps />
