@@ -221,6 +221,36 @@ button {
   stroke: var(--hair);
 }
 
+/* M3：亮了的地方（「一塊塊」畫法）、選中區的分塊線、蓋在最上面的區界 */
+.hkmap-places path,
+.hkmap-place-lines path,
+.hkmap-outlines path {
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+.hkmap-places path {
+  stroke: none;
+}
+
+.hkmap-place-lines path {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 0.5px;
+  stroke-opacity: 0.45;
+}
+
+.hkmap-outlines path {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 0.7px;
+}
+
+.hkmap-outlines path.is-dimmed {
+  stroke: var(--hair);
+}
+
 .hkmap-selected {
   fill: none;
   stroke: var(--ink);
@@ -321,6 +351,16 @@ button {
 
 .level-3 {
   background: var(--seal);
+}
+
+/* M3 圖例：由淺到深的一條（區按亮了幾塊上色）；亮了的地方（「一塊塊」畫法） */
+.swatch.ramp {
+  width: 26px;
+  background: linear-gradient(to right, rgba(45, 62, 92, 0.12), rgba(45, 62, 92, 0.52));
+}
+
+.swatch.lit-place {
+  background: rgba(45, 62, 92, 0.34);
 }
 
 /* ---------- 港島 / 九龍 / 新界 ---------- */
@@ -554,6 +594,24 @@ button {
   font-weight: 900;
   font-size: 30px;
   line-height: 1;
+}
+
+/* 區詳情：這區的地方，亮了的墨色、還沒去過的淡色 */
+.place-names {
+  margin: 0;
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--hair);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--hair);
+}
+
+.place-names .on {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .spot {

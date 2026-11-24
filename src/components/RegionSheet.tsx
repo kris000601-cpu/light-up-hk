@@ -1,5 +1,6 @@
 import { REGIONS, label, regionSummary, useDistricts, type District, type Region } from '../lib/districts'
 import { Sheet } from './Sheet'
+import { districtFill } from './HKMap'
 import { Dots } from './Dots'
 
 interface Props {
@@ -34,9 +35,9 @@ export function RegionSheet({ region, onRegion, onClose, onPick }: Props) {
         {list.map((d) => (
           <li key={d.code}>
             <button type="button" className="district-row" onClick={() => onPick(d)}>
-              <span className={`swatch level-${d.level}`} aria-hidden="true" />
-              <span className={d.visited ? 'district-name' : 'district-name dim'}>{label(d)}</span>
-              {d.visited ? <Dots visited={d.visited} total={d.total} level={d.level} /> : <span className="row-note">還沒去過</span>}
+              <span className="swatch" style={{ background: districtFill(d) }} aria-hidden="true" />
+              <span className={d.visited || d.litPlaces.length ? 'district-name' : 'district-name dim'}>{label(d)}</span>
+              {d.visited || d.litPlaces.length ? <Dots visited={d.visited} total={d.total} level={d.level} /> : <span className="row-note">還沒去過</span>}
               <span className="row-count">
                 {d.visited} / {d.total}
               </span>

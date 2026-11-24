@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { HKMap } from '../components/HKMap'
+import { HKMap, MAP_STYLE } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
 import { InstallHint } from '../components/InstallHint'
@@ -8,12 +8,19 @@ import { REGIONS, SPOT_BY_ID, regionSummary, summary, useCountedStamps, useDistr
 import { monthDay } from '../lib/format'
 import { reloadStamps, useStamps } from '../lib/stamps'
 
-const LEGEND = [
-  { level: 0, text: '未去過' },
-  { level: 1, text: '去過一兩個' },
-  { level: 2, text: '過半' },
-  { level: 3, text: '集齊' },
-]
+// 圖例：區按「亮了幾塊地方」由淺到深，全部亮了才紅（「一塊塊」畫法：亮了的地方塗墨藍）
+const LEGEND =
+  MAP_STYLE === 'places'
+    ? [
+        { cls: '', text: '未去過' },
+        { cls: 'lit-place', text: '去過的地方' },
+        { cls: 'level-3', text: '全區點亮' },
+      ]
+    : [
+        { cls: '', text: '未去過' },
+        { cls: 'ramp', text: '亮了幾塊，越多越深' },
+        { cls: 'level-3', text: '全區點亮' },
+      ]
 
 // 網址參數只用於截圖檢查：?d=E 選中某區，&sheet=district 打開區詳情，?region=九龍 打開分組列表
 const params = new URLSearchParams(window.location.search)
@@ -56,6 +63,9 @@ export function MapPage() {
               {ready ? s.lit : '–'}
               <small> / 18 區</small>
             </dd>
+            <dd className="stat-place">
+              {ready ? s.places : '–'} / {s.placeTotal} 個地方
+            </dd>
           </div>
           <div>
             <dt>景點章</dt>
@@ -91,8 +101,8 @@ export function MapPage() {
         <p className="map-hint">{selected ? '再點一下名字，看這個區的景點' : '點一下地圖上的區，看名字和進度；兩指可以放大地圖'}</p>
         <ul className="legend" aria-label="圖例">
           {LEGEND.map((l) => (
-            <li key={l.level}>
-              <span className={`swatch level-${l.level}`} aria-hidden="true" />
+            <li key={l.text}>
+              <span className={`swatch ${l.cls}`} aria-hidden="true" />
               {l.text}
             </li>
           ))}
@@ -114,7 +124,7 @@ export function MapPage() {
       </div>
 
       <p className="credit">
-        區界：民政事務總署（DATA.GOV.HK）；海岸線、景點範圍：
+        區界、地方：選舉管理委員會、民政事務總署（DATA.GOV.HK）；海岸線、景點範圍：
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
           © OpenStreetMap 貢獻者
         </a>

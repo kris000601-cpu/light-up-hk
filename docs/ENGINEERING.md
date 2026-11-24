@@ -38,7 +38,7 @@
 | 用戶 | 只有 Chris 在試；M2 完成後給朋友試用 |
 | 自動化測試 | **沒有**（見第 10、13 節） |
 
-**里程碑**（詳細見第 12 節）：M0 搭架子 ✅ → M1 全港地圖 ✅ → M2 蓋章 ✅（2026-11-23；下一步給朋友試用）→ M3 區內「地方」+ 撥雲見霧動畫（數據已做，App 未接）→ M4 補錄 / 拍照 / 分享卡片 → M5 朋友（Supabase）。
+**里程碑**（詳細見第 12 節）：M0 搭架子 ✅ → M1 全港地圖 ✅ → M2 蓋章 ✅（2026-11-23；下一步給朋友試用）→ M3 區內「地方」+ 撥雲見霧動畫（第 2 步 2026-11-24 上線：按點時點亮所在的地方、地圖按地方上色；地圖畫法等 Chris 選）→ M4 補錄 / 拍照 / 分享卡片 → M5 朋友（Supabase）。
 
 ---
 
@@ -57,8 +57,8 @@
 | `npm run build` | **先跑數據檢查**（`tools/check-spots.mjs`）→ `tsc --noEmit` → `vite build`。任何一步失敗，CI 部署就失敗 |
 | `npm run preview` | 預覽打包結果（測 Service Worker、效能用這個，不要用 dev） |
 | `npm run spots` | `data/spots.csv` → `data/spots.json`（App）+ `public/check/data.js`（核對頁）。**改了 CSV 一定要跑** |
-| `npm run map` | 官方 18 區界 − 海岸線 → `src/data/hkmap.json` |
-| `npm run places` | 選區 → 「地方」→ `public/check/places-data.js`（M3，App 未用） |
+| `npm run map` | 選區 → 152 個「地方」→ 拼成 18 區 − 海岸線 → `src/data/hkmap.json`（區 + 每個景點在哪個地方）+ `src/data/places.json`（地方的形狀）。**改了景點或地方都要跑** |
+| `npm run places` | 選區 → 「地方」→ `public/check/places-data.js`（只給地方核對頁，比 App 的精細） |
 | `npm run check` | 只跑數據檢查 |
 | `npm run icons` | 由 `public/favicon.svg` 生成 PWA 圖示 |
 | `node tools/gen-files-doc.mjs` | 重新生成 `docs/FILES.md` |
@@ -88,10 +88,10 @@
  ┌──────────────────────────────────────────┐        ┌─────────────────────────────────────────────┐
  │ data/spots.csv ──npm run spots──▶ data/spots.json ─┼──import──▶ src/lib/districts.ts（景點、區、進度）│
  │       │                     └──▶ public/check/data.js（核對頁）                                    │
- │ data/hk18-official.geojson ─┐                      │                                             │
- │ OSM 海岸線（tools/.cache）──┼─npm run map─▶ src/data/hkmap.json ─▶ HKMap.tsx（SVG 地圖）           │
- │                             └─npm run places─▶ public/check/places-data.js（M3，App 未接）         │
- │ data/dcca2019.geojson + places.csv + place-splits.csv ┘                                            │
+ │ data/dcca2019.geojson + places.csv + place-splits.csv ─┐                                          │
+ │ OSM 海岸線（tools/.cache）+ hk18-official（補河套區）──┼─npm run map─▶ src/data/hkmap.json ─▶ HKMap.tsx │
+ │                                                       │            └▶ src/data/places.json（用到時才載入）│
+ │                                                       └─npm run places─▶ public/check/places-data.js │
  └──────────────────────────────────────────┘        │  navigator.geolocation（按一下才讀）           │
                                                      │        ▼                                     │
                                                      │  locate.ts ─▶ radar.ts / range.ts ─▶ HerePage │
@@ -140,8 +140,11 @@
 ### `src/lib/`
 | 文件 | 職責 | 約束 |
 |---|---|---|
-| `stamps.ts` | IndexedDB 存章；`useStamps()`；`addStamp`、`importStamps`、`clearTestStamps`；申請持久儲存 | 見第 6 節。No. 在寫入交易裏數；iPhone 從後台回來連接會被關，有斷線重開 |
-| `districts.ts` | 景點表、18 區、按章算進度（`Level` 0–3）；`useCountedStamps`（測試模式關時排除測試章） | |
+| `db.ts` | IndexedDB 連接、升級（v1 → v3）、`transact(表名[], …)`（可以一個交易用幾個表） | 見第 6 節。iPhone 從後台回來連接會被關，有斷線重開 |
+| `stamps.ts` | 存章；`useStamps()`；`addStamp`、`importStamps`（章 + 點亮的地方同一個交易）、`clearTestStamps`（連測試點亮的地方）；申請持久儲存 | No. 在寫入交易裏數 |
+| `lit.ts` | 點亮的地方（M3）：`lightPlace`、`useLit`、`mergeLit`（真的蓋過測試的；同類留較早那次） | 只存地方編號 + 時間，不存位置 |
+| `places.ts` | 地方的形狀（動態載入 `places.json`）；`placeAt(lat, lng)`：投影到地圖座標 → 點在多邊形內；不在任何地方裏時 150 米內算最近那個 | 每次查約 0.04ms |
+| `districts.ts` | 景點表、18 區、進度：`useLitPlaces`（按點亮的 + 蓋過章的景點所在的地方）、`frac` / `Level` 按「亮了幾塊地方」；`useCountedStamps`（測試模式關時排除測試章） | 景點 → 地方用 `hkmap.json` 的 `spotPlace`（建圖時算好） |
 | `locate.ts` | `startLocate()`：「先出結果，再悄悄變準」 | 第一個 ≤100m 的位置（約 1 秒）就交；1.5 秒有 ≤300m 也先交；4 秒交最好的；之後同一次按壓繼續讀，≤30m 或 10 秒停。`ACC_LIMIT=100`（誤差 >100m 不給蓋），`FIX_TTL=5 分鐘` |
 | `range.ts` | 「站在這裏算不算到了」：到景點形狀（點 / 線 / 面）的距離 − 範圍米 − min(定位誤差, 50) | `MAX_COMP=50`。用戶看到的距離只有一種：到形狀本身的距離 |
 | `radar.ts` | 選最近 10 個、算方向（上北下南，不用指南針）、對數壓縮距離、排版不重疊、章的尺寸（用 canvas 量真字寬） | 章的框必須落在整數像素（iPhone 半像素會令虛線缺邊） |
@@ -156,7 +159,7 @@
 | `where.ts`、`format.ts`、`mockData.ts` | 小工具；假數據 | `where.ts` 的「就快到了」常數現在沒用（Chris 決定不顯示） |
 
 ### `tools/`（Node 腳本，打包前在本機跑，輸出入庫）
-`build-spots.mjs`、`check-spots.mjs`、`spots-lib.mjs`（CSV 解析、距離、Overpass）、`find-spots.mjs`（OSM 地名搜索找候選座標）、`build-map.mjs`、`coast-lib.mjs`（海岸線連成陸地多邊形，18 區和地方共用）、`build-places.mjs`、`picto-board.mjs`（圖案對比板）、`gen-files-doc.mjs`（生成 `docs/FILES.md`）、`decode_echarts_map.py`（舊，解碼最初的低精度區界，已不用）。
+`build-spots.mjs`、`check-spots.mjs`（也核對每個景點都有地方）、`spots-lib.mjs`（CSV 解析、距離、Overpass）、`find-spots.mjs`（OSM 地名搜索找候選座標）、`build-map.mjs`、`coast-lib.mjs`（海岸線連成陸地多邊形，18 區和地方共用）、`places-lib.mjs`（地方的核對 + 幾何，地圖和核對頁共用）、`build-places.mjs`、`picto-board.mjs`（圖案對比板）、`gen-files-doc.mjs`（生成 `docs/FILES.md`）、`decode_echarts_map.py`（舊，解碼最初的低精度區界，已不用）。
 
 ---
 
@@ -172,17 +175,21 @@
 - `npm run build` 會先跑 `check-spots.mjs`：CSV ↔ spots.json ↔ 核對頁數據、區名、座標對不上就失敗（防止改了 CSV 忘了跑 `npm run spots`）。
 - Overpass 取形狀的緩存在 `tools/.cache/`（不入庫）。
 
-### 5.2 全港地圖
-- `data/hk18-official.geojson`：民政事務總署 18 區界（DATA.GOV.HK，含海面）。
-- `tools/build-map.mjs`：官方區界 − OSM 海岸線（`tools/coast-lib.mjs`，緩存在 `tools/.cache/osm-coastline.json`，沒有會自動下載）→ 機場第三跑道（官方界畫於填海之前，被劃進屯門區海域）歸回離島區 → 去掉 < 0.15 km² 的小島 → mapshaper 簡化（保持相鄰區共用邊）→ 投影成 1000 寬的 SVG 路徑 → `src/data/hkmap.json`（約 168 KB）。
+### 5.2 全港地圖（2026-11-24 起由「地方」拼成）
+- `data/hk18-official.geojson`：民政事務總署 18 區界（DATA.GOV.HK，含海面）。現在只用來補回選區沒有的陸地、和提供區名。
+- `tools/build-map.mjs`：選區 − OSM 海岸線（`tools/coast-lib.mjs`，緩存在 `tools/.cache/osm-coastline.json`）→ 機場第三跑道歸回離島（東涌北）→ 郊區再切 → 補回民政署區界有、選區沒有的陸地（只有**落馬洲河套區**約 1.09 km²，歸 p091 新田 · 南生圍）→ 去掉 < 0.15 km² 的小島 → mapshaper 簡化（相鄰地方共用邊）→ 合併成 152 個地方 → 再合併成 18 區（所以區的外框和地方的邊是**同一條線**）→ 投影成 1000 寬的 SVG 路徑。
+  - `src/data/hkmap.json`（約 178 KB，打包進主程式）：18 區路徑、每區有哪些地方、地方名、`spotPlace`（每個景點在哪個地方）、投影參數 `proj`。
+  - `src/data/places.json`（約 293 KB / 壓縮後 100 KB，**動態載入**，不拖慢打開；Service Worker 一樣會緩存）：每個地方的路徑和名字位置。
+  - 為甚麼改用選區拼：2026-11-24 逐區量過，選區界和民政署區界是同一套線，除了河套區只差幾百平方米的碎邊。用地方拼區，以後畫地方、撥雲見霧都不會有縫。
+  - 景點座標落在別區（獅子山、魔鬼山、大棠楓香林在區界上）或水面（大美督、城門河）：`spotPlace` 用景點所屬區最近的地方（蓋章點亮的是那一區）；首頁按點時則按人實際站的位置。
 - **Chris 特別強調**：地圖必須露出維港；選中某區的加粗描邊必須用「裁好海面之後」的同一條路徑，只描在區內側，完全貼合。
 - `data/hk18-simplified.geojson`：最初的低精度區界（來自 ECharts），已不用，只留作參考。
 
-### 5.3 M3「地方」（區內細分；數據已做，App 未接）
+### 5.3 M3「地方」（區內細分）
 - `data/dcca2019.geojson`：選舉管理委員會 2019 年區議會選區 452 個（DATA.GOV.HK，`https://www.eac.hk/datagovhk/dc2019/DCCA2019.json`），已由香港 1980 方格網（EPSG:2326）轉成 WGS84，含海面。全部核對落在自己的區（選區代號首字母 = 區代號）。2023 年改制後只剩 44 個太粗，所以用 2019。
 - `data/places.csv`：152 個「地方」（`編號 p001–p152, 區, 地方, 選區`），每個由若干選區合併。編號規則同景點：**上線後永不改、不重用**（未上線前還可以改）。
 - `data/place-splits.csv`：郊區大選區用經緯度長方形再切（大嶼山南 → 大澳 / 昂坪 / 長沙 · 貝澳 / 梅窩、東涌炮台舊谷歸東涌；赤柱及石澳 → 赤柱 / 石澳 · 龍脊 / 大潭；西九文化區從尖沙咀西切出；蝴蝶灣海灘歸屯門碼頭；沙打 → 打鼓嶺 / 沙頭角 · 鹿頸 / 荔枝窩 · 吉澳；塔門 · 東平洲、橋咀洲 · 鹽田梓兩個島組）。切線是直的。
-- `tools/build-places.mjs` 核對（每個選區恰好用一次、區對得上）→ 裁海面 → 再切 → 簡化 → 合併 → `public/check/places-data.js`（約 1.4 MB，只給核對頁）。
+- `tools/places-lib.mjs` 核對（每個選區恰好用一次、區對得上）+ 裁海面 → 再切；`build-map.mjs`（App）和 `build-places.mjs`（核對頁，`public/check/places-data.js` 約 1.4 MB，簡化得比較細）共用。
 - Chris 2026-11-22 看過核對頁：地名沒問題。79 / 152 個地方沒有景點（所以要「選 B」：按點時順手點亮所在那一塊）。
 
 ### 5.4 景點專屬圖案（進行中）
@@ -199,7 +206,9 @@
 ## 6. 手機本地數據模型（改動要非常小心：關係到用戶已經蓋的章）
 
 ### 6.1 IndexedDB
-- 數據庫 `light-up-hk`，**版本 2**，表 `stamps`（keyPath `id` 自增），索引 `spotId`、`uid`（unique）。v1 → v2 時給舊章補 `uid`。
+- 數據庫 `light-up-hk`，**版本 3**（`src/lib/db.ts`）：表 `stamps`（keyPath `id` 自增），索引 `spotId`、`uid`（unique）；表 `lit`（keyPath `place`，v3 加）。v1 → v2 時給舊章補 `uid`；v2 → v3 只加 `lit` 表（2026-11-24 在預覽瀏覽器用真的 v2 數據庫測過，舊章完整保留）。
+- `lit` 記錄：`{ place: 'p021', at: 第一次亮的毫秒, test?: true }`。一個地方一條；**不存位置**。真的去過蓋過測試的；同類留較早那次（`mergeLit`）。
+- 「亮了的地方」= `lit` 表（測試的只在測試模式開着時算）∪ 蓋過章的景點所在的地方（由章推出來、不另存，所以 M3 之前的章也照樣點亮）。
 - 記錄（`Stamp`，`src/lib/stamps.ts`）：
 
 | 欄位 | 說明 |
@@ -218,10 +227,10 @@
 - **iPhone 注意**：Safari 和主畫面 App 的儲存是分開的；系統在後台會關掉數據庫連接（已處理斷線重開）；長期不打開可能被系統清（所以有備份）。
 
 ### 6.2 備份檔（`src/lib/backup.ts`）
-- 檔名「點亮香港備份-YYYY-MM-DD.json」，格式 `{ format: 'light-up-hk/stamps', version: 1, ... stamps: [ Stamp 去掉 id ] }`；測試章只在測試模式開着時才匯出。
+- 檔名「點亮香港備份-YYYY-MM-DD.json」，格式 `{ format: 'light-up-hk/stamps', version: 2, ... stamps: [ Stamp 去掉 id ], lit: [ { place, at, test? } ] }`；測試章 / 測試點亮的只在測試模式開着時才匯出。**v1（沒有 lit）照樣能還原**；比 App 新的版本拒絕。
 - iPhone 用分享選單（`.json` 不給分享就退成 `text/plain`），其他平台直接下載。
 - 導入：先講清楚「這份有幾個章、手機裏已有幾個、會加入幾個」，按了才加；**只加不刪不覆蓋**（按 uid 去重）；兩邊各自從 No.1 數起而撞號時，全部正式章按蓋章時間重新編號（導入前就說明）。壞檔 / 別的檔 / 新版本的檔都拒絕，不導入半份。
-- M3 加了「點亮記錄」後，備份格式要升版本並保持能讀 v1。
+- 導入時章和地方在同一個交易裏寫（要麼全進，要麼全不進）；只有地方是新的也可以導入。
 
 ### 6.3 localStorage 鍵
 `lhk.lastBackup`（上次備份時間，只記在這部手機）、`backup-hint-hidden-until`、`install-hint-hidden-until`、`test-mode`、`test-fake-location`、`lhk.stampGuided`（蓋成功過一次後不再顯示按壓指引）、`browser-stamp-ok`（舊版用過，已不用）。
@@ -234,7 +243,8 @@
 2. **雷達**：`radarSpots` 選最近 10 個（已在範圍裏的最近那個落在正中，大一號實心紅章「你已到達」）；`layoutRadar` 按真實方向、對數壓縮距離放，放不下挪到最近空位，一定不疊。長條章只分兩種：可以蓋 = 白文實心紅；其他不管去沒去過 = 墨藍虛線框（2026-11-23 起；印泥紅只表示「現在可以蓋」）。按一下底部出小卡片（名字、距離、蓋過幾次 · 看印章冊、「帶我去 ›」= Google 地圖導航到範圍內最近一點，或「蓋章」）。
 3. **蓋章**：按「你已到達」→（iPhone 瀏覽器：只彈「先加到主畫面」）→ 全屏蓋章頁 → 按住 0.7 秒 → 壓到底「咔嗒」→ `addStamp` 寫入 → 濕墨約 20 秒內不均勻變乾。蓋章頁開着時延後自動更新。
 4. **看章**：印章冊（每景點一頁，按第一次來的先後；疊章可「逐個看」）、區詳情（每行最近那枚小章，按一下跳印章冊）、地圖按進度上色（三墨：去過一兩個墨藍 20%、過半 48%、集齊才變印泥紅）。
-5. **更新**：`registerType: 'autoUpdate'` + `virtual:pwa-register`；新版接管後自動重新載入；回到前台檢查更新；`holdUpdates()` 期間延後。`/check/` 不進離線副本（`navigateFallbackDenylist`）。「我的」頁顯示版本（`__BUILD__` = 提交號前 7 位 · 香港時間打包時間），用來確認手機跑的是哪一版。
+5. **點亮地方**（M3）：首頁按點那一次讀位置結束時（`onDone`，用最準的位置），誤差 ≤ 100 米就 `placeAt` → `lightPlace`（假位置的是測試的）。不加字、不加按鈕，地圖上悄悄變色。
+6. **更新**：`registerType: 'autoUpdate'` + `virtual:pwa-register`；新版接管後自動重新載入；回到前台檢查更新；`holdUpdates()` 期間延後。`/check/` 不進離線副本（`navigateFallbackDenylist`）。「我的」頁顯示版本（`__BUILD__` = 提交號前 7 位 · 香港時間打包時間），用來確認手機跑的是哪一版。
 
 ---
 
@@ -304,10 +314,12 @@
 | 11-22 | 雷達的章一出來就定住，精確位置只在後台用 | 雷達只是大概方向 |
 | 11-22 | 每景點專屬圖案用 Gemini 生成 | 87 個人手畫不現實 |
 | 11-23 | 雷達長條章只分「能蓋（實心紅）/ 不能蓋（虛線）」，去掉「蓋過 = 紅框」 | 紅色只表示一件事；蓋過幾次在小卡片看 |
+| 11-24 | 區界改由「地方」（選區）拼成，補回落馬洲河套區 | 兩套界線實測幾乎一樣；地方和區要完全貼合 |
+| 11-24 | 點亮用最後最準的位置、誤差 ≤ 100 米；只存地方 + 時間 | 免得亮錯隔壁；私隱 |
 
 ### 路線圖（截至本文更新日）
 - **M2 蓋章**：全部完成（2026-11-23 實地測試）。下一步：把 `docs/friend-guide.md` 發給朋友試用。
-- **M3**：第 1 步「地方」數據完成且 Chris 已看。**第 2 步（未開始）**：App 用的地方圖（`src/data/places.json`，與 18 區同一投影；要決定以選區界還是民政署區界為準，兩者有細微差別，區外框要與地方完全貼合）+ 點亮記錄（IndexedDB 新表、備份格式 v2）+ 首頁按點時順手點亮 + 地圖按「亮了幾塊」上色。之後撥雲見霧推進動畫（點區 → 鏡頭推進 → 霧散開露出地方）。
+- **M3**：第 1 步「地方」數據完成且 Chris 已看。**第 2 步（2026-11-24 上線）**：地方圖（`places.json`，區由地方拼成）+ 點亮記錄（IndexedDB v3 `lit` 表、備份 v2）+ 首頁按點時順手點亮 + 地圖按地方上色 + 區詳情列出地方。**地圖畫法等 Chris 選**：A 整區按亮了幾成變深（現在的預設）/ B 亮了的地方一塊塊畫出來（`?mapstyle=places`）；選定後刪掉另一種。之後撥雲見霧推進動畫（點區 → 鏡頭推進 → 霧散開露出地方）。
 - **景點專屬圖案**：Gemini 已畫 s001–s053（s023 是參考圖），額度用完停在 s054（2026-11-24）。之後要描成向量路徑。
 - **M4** 補錄（虛線章）、拍照、分享卡片（9:16）。**M5** 朋友（Supabase；朋友只讀「點亮了哪些區」，不同步精確位置和時間，行級權限）。
 - **未決**：改名（App Store 已有 ExploreHK）；景點數量要不要加（觀塘、葵青、沙田景點少）。
@@ -318,10 +330,10 @@
 
 1. **沒有自動化測試**。最值得先補的：`range.ts` / `radar.ts` 的純函數單元測試（距離、方向、排版不重疊、整數像素）、`backup.ts` 的導入計劃（去重、重新編號）、`stamps.ts` 的遷移。可以用 Vitest（與 Vite 同生態），不必動現有結構。
 2. **大組件**：`HerePage.tsx`（約 500 行）、`StampPage.tsx`（約 570 行）、`useMapZoom.ts`（約 380 行）。改之前先讀頭部註釋；時序相關的狀態（`basis` vs `fix`、`arrivedRef`、`holdUpdates`）是踩過坑才這樣寫的。
-3. **IndexedDB 是用戶唯一的數據**。任何 schema 改動都要寫遷移、保持舊備份能導入；先在 `?mock=1` 以外的真數據上測升級。M3 會是第一次加表。
+3. **IndexedDB 是用戶唯一的數據**。任何 schema 改動都要寫遷移、保持舊備份能導入；先在 `?mock=1` 以外的真數據上測升級。M3（v3）已經加了 `lit` 表。
 4. **iPhone 行為只能真機驗證**，電腦 Chrome 通過不代表 iPhone 沒問題。
 5. **CLAUDE.md 路線圖看板很長**（決定的原話都在裏面），是「為甚麼」的真相來源，但不好讀。本文第 12 節是摘要。
-6. **地方數據**：選區界 vs 民政署區界有細微差別；`places-data.js` 1.4 MB 只能給核對頁用，App 版要另外簡化、投影。郊區切線是直的長方形。
+6. **地方數據**：區界由地方拼成（見 5.2）；`places-data.js` 1.4 MB 只給核對頁；App 用 `places.json`（動態載入）。郊區切線是直的長方形。地圖去掉了 < 0.15 km² 的小島，站在那些小島上要靠「150 米內算最近的地方」。
 7. **景點專屬圖案**：Gemini 輸出是點陣 JPEG，要描成線條路徑才能進章面；Gemini 網頁版有每日額度、偶爾整個請求消失或只回 SVG 代碼（見 `design/gemini/out/README.md` 的做法備忘）。
 8. **數據來源依賴**：Overpass / Nominatim 只在跑腳本時用（有緩存）；App 執行時不依賴任何外部服務（Google Fonts 除外，已做運行時緩存）。
 9. **沒有錯誤上報 / 分析**（刻意不加，私隱優先）。用戶問題靠 Chris 截圖；測試模式下蓋章頁頂部有一行除錯記錄（版本號 + 每一步）。

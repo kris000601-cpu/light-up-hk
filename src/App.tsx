@@ -6,7 +6,8 @@ import { BookPage } from './pages/BookPage'
 import { HOME_MOCK_REVEALED, HerePage } from './pages/HerePage'
 import { StampPreview } from './pages/StampPreview'
 import { mockStamps } from './lib/stamps'
-import { MOCK_STAMPS, manyStamps } from './lib/mockData'
+import { MOCK_LIT, MOCK_STAMPS, manyStamps } from './lib/mockData'
+import { mockLit } from './lib/lit'
 import { clearNav, useNavRequest } from './lib/nav'
 
 const params = new URLSearchParams(window.location.search)
@@ -15,6 +16,7 @@ const PREVIEW = params.get('stamps') === 'preview'
 // 設計稿截圖：?mock=1 用假印章（&many=1 = 每個景點兩個章，測章多了會不會慢）；?tab=book / me / map 直接打開那一格（地圖的 ?d=E 也會打開地圖）
 if (params.get('mock') === '1') {
   mockStamps(params.get('many') === '1' ? manyStamps() : MOCK_STAMPS)
+  mockLit(MOCK_LIT)
   document.documentElement.classList.add('mock') // 截圖時不要動畫
 }
 const wantTab = params.get('tab') ?? (params.get('d') ? 'map' : null)

@@ -4,6 +4,8 @@
 // 記錄裏另存一份景點名和區名：以後景點清單改了，舊章仍然知道自己是甚麼。
 // 每條記錄有全球唯一的 uid：以後導入備份、同步到網上時，靠它認出「這個章已經有了」。
 import { useSyncExternalStore } from 'react'
+import { LIT, MOCK, STAMPS, transact, uuid } from './db'
+import { mergeLit, reloadLit, type Lit } from './lit'
 
 export interface Stamp {
   /** 這部手機裏的自動編號（只在本機有意義） */
@@ -31,10 +33,6 @@ export interface Stamp {
 
 export type NewStamp = Omit<Stamp, 'id' | 'uid' | 'no' | 'at'>
 
-const DB_NAME = 'light-up-hk'
-const DB_VERSION = 2
-const STORE = 'stamps'
-
 interface State {
   ready: boolean
   stamps: Stamp[]
@@ -49,85 +47,12 @@ const set = (patch: Partial<State>) => {
   listeners.forEach((l) => l())
 }
 
-function uuid(): string {
-  if (crypto.randomUUID) return crypto.randomUUID()
-  const b = crypto.getRandomValues(new Uint8Array(16))
-  b[6] = (b[6] & 0x0f) | 0x40
-  b[8] = (b[8] & 0x3f) | 0x80
-  const h = [...b].map((x) => x.toString(16).padStart(2, '0')).join('')
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
-}
-
-let dbPromise: Promise<IDBDatabase> | null = null
-function db(): Promise<IDBDatabase> {
-  dbPromise ??= new Promise<IDBDatabase>((resolve, reject) => {
-    if (!('indexedDB' in window)) return reject(new Error('no indexedDB'))
-    const req = indexedDB.open(DB_NAME, DB_VERSION)
-    req.onupgradeneeded = (e) => {
-      const d = req.result
-      const store = e.oldVersion < 1 ? d.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true }) : req.transaction!.objectStore(STORE)
-      if (e.oldVersion < 1) store.createIndex('spotId', 'spotId')
-      if (e.oldVersion < 2) {
-        // v2：舊記錄補上 uid
-        store.openCursor().onsuccess = (ev) => {
-          const cur = (ev.target as IDBRequest<IDBCursorWithValue | null>).result
-          if (!cur) return
-          if (!cur.value.uid) cur.update({ ...cur.value, uid: uuid() })
-          cur.continue()
-        }
-        store.createIndex('uid', 'uid', { unique: true })
-      }
-    }
-    req.onsuccess = () => {
-      const d = req.result
-      // 另一個分頁要升級數據庫時，讓出來，下次用到再重新打開
-      d.onversionchange = () => {
-        d.close()
-        dbPromise = null
-      }
-      // iPhone 把 App 放到後台久了，系統可能把數據庫連接關掉：下次用到時重新打開
-      d.onclose = () => {
-        dbPromise = null
-      }
-      resolve(d)
-    }
-    req.onerror = () => reject(req.error)
-    req.onblocked = () => reject(new Error('blocked'))
-  }).catch((err) => {
-    dbPromise = null // 打不開不要記住失敗，下次再試
-    throw err
-  })
-  return dbPromise
-}
-
-/** 在一個交易裏做事；交易真正寫進去之後才算成功 */
-function transact<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore, done: (v: T) => void) => void, retried = false): Promise<T> {
-  return db().then((d) => {
-    let t: IDBTransaction
-    try {
-      t = d.transaction(STORE, mode)
-    } catch (err) {
-      // 連接已經斷了（例如 iPhone 在後台關掉了它）：交易還沒開始、甚麼都沒寫，重新打開再試一次是安全的
-      dbPromise = null
-      if (retried) throw err
-      return transact(mode, run, true)
-    }
-    return new Promise<T>((resolve, reject) => {
-        let value: T
-        run(t.objectStore(STORE), (v) => (value = v))
-        t.oncomplete = () => resolve(value)
-        t.onerror = () => reject(t.error)
-        t.onabort = () => reject(t.error ?? new Error('abort'))
-    })
-  })
-}
-
 const byTime = (a: Stamp, b: Stamp) => a.at - b.at || a.id - b.id
 const READ_ERROR = '讀取不到印章。如果開了私密瀏覽（無痕模式），請改用一般模式打開；否則按「再試一次」。'
 
 // 設計稿截圖用：網址加 ?mock=1，用一套假印章代替手機裏的（不讀也不寫數據庫）。
 // 一載入就看網址，不等 App 叫 mockStamps()：不然開頭那一次 reloadStamps() 會先讀了真數據庫
-let mocked = new URLSearchParams(window.location.search).get('mock') === '1'
+let mocked = MOCK
 export function mockStamps(list: Stamp[]) {
   mocked = true
   set({ ready: true, stamps: [...list].sort(byTime), error: null })
@@ -137,7 +62,7 @@ export function mockStamps(list: Stamp[]) {
 export async function reloadStamps() {
   if (mocked) return
   try {
-    const all = await transact<Stamp[]>('readonly', (s, done) => {
+    const all = await transact<Stamp[], [typeof STAMPS]>([STAMPS], 'readonly', ([s], done) => {
       s.getAll().onsuccess = (e) => done((e.target as IDBRequest<Stamp[]>).result)
     })
     if (mocked) return
@@ -163,7 +88,7 @@ export async function addStamp(s: NewStamp): Promise<Stamp> {
     set({ stamps: [...state.stamps, stamp] })
     return stamp
   }
-  const stamp = await transact<Stamp>('readwrite', (store, done) => {
+  const stamp = await transact<Stamp, [typeof STAMPS]>([STAMPS], 'readwrite', ([store], done) => {
     // 編號在同一個交易裏數：兩個分頁同時蓋也不會撞號；清走測試章也不會影響
     store.getAll().onsuccess = (e) => {
       const all = (e.target as IDBRequest<Stamp[]>).result
@@ -179,12 +104,16 @@ export async function addStamp(s: NewStamp): Promise<Stamp> {
 }
 
 /**
- * 從備份導入：只加手機裏還沒有的章（按 uid 認），現有的不刪、不覆蓋。
+ * 從備份導入（章和點亮的地方在同一個交易裏，要麼全進，要麼全不進）：
+ * 只加手機裏還沒有的章（按 uid 認），現有的不刪、不覆蓋。
  * 合併後 No. 撞號（兩部手機各自從 No.1 數起）時，全部正式章按蓋章時間重新編號。
+ * 地方：手機裏沒亮的加進去；兩邊都亮了，留較早那次（真的去過蓋過測試的）。
  */
-export async function importStamps(list: Omit<Stamp, 'id'>[]): Promise<{ added: number; renumbered: boolean }> {
-  if (mocked) return { added: 0, renumbered: false }
-  const res = await transact<{ added: number; renumbered: boolean }>('readwrite', (store, done) => {
+export async function importStamps(list: Omit<Stamp, 'id'>[], lit: Lit[] = []): Promise<{ added: number; renumbered: boolean; places: number }> {
+  if (mocked) return { added: 0, renumbered: false, places: 0 }
+  const res = { added: 0, renumbered: false, places: 0 }
+  await transact<typeof res, [typeof STAMPS, typeof LIT]>([STAMPS, LIT], 'readwrite', ([store, litStore], done) => {
+    done(res) // 下面的回呼會填好數字；交易寫完才交出去
     store.getAll().onsuccess = (e) => {
       const all = (e.target as IDBRequest<Stamp[]>).result
       const have = new Set(all.map((s) => s.uid))
@@ -197,29 +126,43 @@ export async function importStamps(list: Omit<Stamp, 'id'>[]): Promise<{ added: 
         for (const s of all) if (!s.test) store.put(s)
       }
       for (const s of fresh) store.add(s)
-      done({ added: fresh.length, renumbered })
+      res.added = fresh.length
+      res.renumbered = renumbered
     }
+    if (lit.length)
+      litStore.getAll().onsuccess = (e) => {
+        const mine = new Map((e.target as IDBRequest<Lit[]>).result.map((x) => [x.place, x]))
+        for (const x of lit) {
+          const rec = mergeLit(mine.get(x.place), x)
+          if (!rec) continue
+          if (!mine.has(x.place)) res.places++
+          litStore.put(rec)
+        }
+      }
   })
-  await reloadStamps()
-  if (res.added) requestPersist()
+  await Promise.all([reloadStamps(), reloadLit()])
+  if (res.added || res.places) requestPersist()
   return res
 }
 
-/** 清走所有測試章 */
+/** 清走所有測試章（連同測試模式下點亮的地方） */
 export async function clearTestStamps() {
   if (mocked) {
     set({ stamps: state.stamps.filter((x) => !x.test) })
+    await reloadLit({ dropTest: true })
     return
   }
-  await transact<void>('readwrite', (store, done) => {
-    store.openCursor().onsuccess = (e) => {
-      const cur = (e.target as IDBRequest<IDBCursorWithValue | null>).result
-      if (!cur) return done()
-      if (cur.value.test) cur.delete()
-      cur.continue()
-    }
+  await transact<void, [typeof STAMPS, typeof LIT]>([STAMPS, LIT], 'readwrite', ([store, litStore], done) => {
+    done()
+    for (const s of [store, litStore])
+      s.openCursor().onsuccess = (e) => {
+        const cur = (e.target as IDBRequest<IDBCursorWithValue | null>).result
+        if (!cur) return
+        if (cur.value.test) cur.delete()
+        cur.continue()
+      }
   })
-  await reloadStamps()
+  await Promise.all([reloadStamps(), reloadLit()])
 }
 
 const subscribe = (l: () => void) => {

@@ -1,6 +1,7 @@
 // 設計稿截圖用的一套假印章（網址加 ?mock=1）。不會寫進手機。
 import { SPOT_BY_ID, SPOTS } from './districts'
 import type { Stamp } from './stamps'
+import type { Lit } from './lit'
 
 // [景點, 月, 日, 時, 分, px, py, rot]（香港時間）
 const RAW: [string, number, number, number, number, number, number, number][] = [
@@ -65,3 +66,11 @@ export function manyStamps(): Stamp[] {
   })
   return out.sort((a, b) => a.at - b.at).map((s, i) => ({ ...s, no: i + 1 }))
 }
+
+/**
+ * 截圖用：在首頁按點時順手點亮了的地方（M3）。東區全亮（看「全部亮了才變紅」），其他零零星星。
+ * 蓋過章的景點所在的地方另外由章推出來，不用列在這裏。
+ */
+export const MOCK_LIT: Lit[] = ['p014', 'p015', 'p016', 'p017', 'p018', 'p019', 'p020', 'p021', 'p022', 'p008', 'p009', 'p011', 'p002', 'p003', 'p032', 'p033', 'p116', 'p120'].map(
+  (place, i) => ({ place, at: Date.UTC(2026, 9, 1) + i * 86400e3 }),
+)

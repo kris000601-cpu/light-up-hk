@@ -6,6 +6,7 @@ import { monthDay } from '../lib/format'
 import { platform } from '../lib/install'
 import { addStamp, clearTestStamps, reloadStamps, usePersist, useStamps } from '../lib/stamps'
 import { setFakeLocation, setTestMode, useFakeLocation, useTestMode } from '../lib/testMode'
+import { useLit } from '../lib/lit'
 
 const VERSION = '0.5'
 
@@ -95,6 +96,8 @@ function TestTools() {
   const fake = useFakeLocation()
   const d = districts.find((x) => x.code === code) ?? districts[0]
   const tests = stamps.filter((s) => s.test).length
+  const { lit } = useLit()
+  const testPlaces = lit.filter((x) => x.test).length
 
   const run = async (f: () => Promise<unknown>) => {
     setBusy(true)
@@ -111,7 +114,7 @@ function TestTools() {
         測試工具
       </h2>
       <p className="block-text">
-        「假裝在這」：回到「蓋章」頁按中間的點，就當你人在那個景點（不讀 GPS），可以試「你已到達」和蓋章；選大的假誤差可以試「誤差太大，不給蓋」。「蓋測試章」：直接蓋，不用定位。測試章只在測試模式開着時算進進度，可以一鍵清走。
+        「假裝在這」：回到「蓋章」頁按中間的點，就當你人在那個景點（不讀 GPS），可以試「你已到達」和蓋章；選大的假誤差可以試「誤差太大，不給蓋」。「蓋測試章」：直接蓋，不用定位。假裝在某處按中間的點，也會點亮那個地方（測試的）。測試章和測試點亮的地方只在測試模式開着時算進進度，可以一鍵清走。
       </p>
       {fake && (
         <p className="fake-note">
@@ -162,8 +165,8 @@ function TestTools() {
           )
         })}
       </ul>
-      <button type="button" className="btn-outline" disabled={busy || !tests} onClick={() => run(clearTestStamps)}>
-        清走全部測試章（{tests} 枚）
+      <button type="button" className="btn-outline" disabled={busy || (!tests && !testPlaces)} onClick={() => run(clearTestStamps)}>
+        清走全部測試章（{tests} 枚）{testPlaces ? `和測試點亮的 ${testPlaces} 個地方` : ''}
       </button>
       <button type="button" className="btn-text" onClick={() => setTestMode(false)}>
         關閉測試工具

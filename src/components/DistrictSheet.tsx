@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { label, useCountedStamps, type District } from '../lib/districts'
+import { PLACE_NAMES, label, useCountedStamps, type District } from '../lib/districts'
 import { monthDay } from '../lib/format'
 import { openBook } from '../lib/nav'
 import { navToSpot } from '../lib/where'
@@ -36,6 +36,14 @@ export function DistrictSheet({ district, onClose }: Props) {
         </span>
         <Dots visited={d.visited} total={d.total} level={d.level} />
       </div>
+      {/* 這區分成哪幾塊：亮了的用墨色，還沒去過的淡淡的（不加說明文字，看得出就好） */}
+      <p className="place-names" aria-label={`亮了 ${d.litPlaces.length} / ${d.places.length} 個地方`}>
+        {d.places.map((p) => (
+          <span key={p} className={d.litPlaces.includes(p) ? 'on' : undefined}>
+            {PLACE_NAMES[p]}
+          </span>
+        ))}
+      </p>
       <ul className="spot-list rd">
         {d.spots.map((s) => {
           const list = bySpot[s.id] ?? []

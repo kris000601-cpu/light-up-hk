@@ -3,12 +3,15 @@
 // 導入只會「加」：靠每枚章的 uid 認出手機裏已經有的，跳過；手機裏現有的章不刪、不覆蓋。
 // 唯一會改的是 No.：兩部手機（或 Safari 和主畫面 App）各自從 No.1 數起，合併後號碼會撞，
 // 這時才把全部正式章按蓋章時間重新編號，並且在導入前講清楚。
+//
+// 版本：v1 只有章；v2（M3，2026-11-24）加上點亮的地方（lit：地方編號 + 第一次亮的時間）。舊的 v1 檔案照樣能還原。
 import { useSyncExternalStore } from 'react'
 import { isIOS } from './install'
+import { mergeLit, type Lit } from './lit'
 import type { Stamp } from './stamps'
 
 const FORMAT = 'light-up-hk/stamps'
-const VERSION = 1
+const VERSION = 2
 
 export type BackupStamp = Omit<Stamp, 'id'>
 
@@ -17,7 +20,7 @@ export type BackupError = 'notOurs' | 'broken' | 'newer' | 'tooBig'
 const hkDate = (ms: number) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: '2-digit', day: '2-digit' }).format(ms)
 
 /** 備份檔案的內容（JSON 文字）和檔名 */
-export function makeBackup(stamps: Stamp[]) {
+export function makeBackup(stamps: Stamp[], lit: Lit[]) {
   const now = Date.now()
   const body = {
     format: FORMAT,
@@ -26,6 +29,7 @@ export function makeBackup(stamps: Stamp[]) {
     exportedAt: new Date(now).toISOString(),
     count: stamps.length,
     stamps: stamps.map(({ id: _id, ...rest }) => rest),
+    lit: lit.map((x) => (x.test ? { place: x.place, at: x.at, test: true } : { place: x.place, at: x.at })),
   }
   return { name: `點亮香港備份-${hkDate(now)}.json`, text: JSON.stringify(body, null, 1) }
 }
@@ -36,8 +40,8 @@ export function makeBackup(stamps: Stamp[]) {
  * 其他：直接下載（安卓 Chrome 的分享不收 .json 檔）。
  * 一定要在按鈕的點擊裏直接呼叫（中間不要 await），否則 iPhone 不准彈分享選單。
  */
-export async function saveBackup(stamps: Stamp[]): Promise<'shared' | 'downloaded' | 'cancelled'> {
-  const { name, text } = makeBackup(stamps)
+export async function saveBackup(stamps: Stamp[], lit: Lit[]): Promise<'shared' | 'downloaded' | 'cancelled'> {
+  const { name, text } = makeBackup(stamps, lit)
   const file = new File([text], name, { type: 'application/json' })
   // 有些 iPhone 版本不肯分享 .json 類型：退一步當純文字分享（檔名不變，導入時一樣認得）
   const shareable = [file, new File([text], name, { type: 'text/plain' })].find((f) => navigator.canShare?.({ files: [f] }))
@@ -86,8 +90,21 @@ function clean(x: unknown): BackupStamp | null {
   return out
 }
 
+/** 檢查一個點亮的地方的記錄 */
+function cleanLit(x: unknown): Lit | null {
+  if (!x || typeof x !== 'object') return null
+  const s = x as Record<string, unknown>
+  if (typeof s.place !== 'string' || !/^p\d{3,}$/.test(s.place) || !num(s.at) || (s.at as number) <= 0) return null
+  return s.test === true ? { place: s.place, at: s.at as number, test: true } : { place: s.place, at: s.at as number }
+}
+
+export interface BackupData {
+  stamps: BackupStamp[]
+  lit: Lit[]
+}
+
 /** 讀備份檔案；不是我們的檔案、壞了、太新，都拋出 BackupError */
-export async function readBackup(file: File): Promise<BackupStamp[]> {
+export async function readBackup(file: File): Promise<BackupData> {
   if (file.size > 5_000_000) throw 'tooBig' satisfies BackupError
   let data: unknown
   try {
@@ -95,15 +112,21 @@ export async function readBackup(file: File): Promise<BackupStamp[]> {
   } catch {
     throw 'notOurs' satisfies BackupError
   }
-  const d = data as { format?: unknown; version?: unknown; stamps?: unknown }
+  const d = data as { format?: unknown; version?: unknown; stamps?: unknown; lit?: unknown }
   if (!d || d.format !== FORMAT || !Array.isArray(d.stamps)) throw 'notOurs' satisfies BackupError
   if (typeof d.version !== 'number' || !Number.isFinite(d.version) || d.version < 1) throw 'notOurs' satisfies BackupError
   if (d.version > VERSION) throw 'newer' satisfies BackupError
   const list = d.stamps.map(clean)
   if (list.some((x) => !x)) throw 'broken' satisfies BackupError
-  // 同一個檔案裏重複的 uid 只留一個
+  // v1 沒有 lit；v2 有的話要是一個列表
+  if (d.lit !== undefined && !Array.isArray(d.lit)) throw 'broken' satisfies BackupError
+  const lits = ((d.lit as unknown[] | undefined) ?? []).map(cleanLit)
+  if (lits.some((x) => !x)) throw 'broken' satisfies BackupError
+  // 同一個檔案裏重複的 uid 只留一個；同一個地方合併成一條
   const seen = new Set<string>()
-  return (list as BackupStamp[]).filter((s) => !seen.has(s.uid) && seen.add(s.uid))
+  const byPlace = new Map<string, Lit>()
+  for (const x of lits as Lit[]) byPlace.set(x.place, mergeLit(byPlace.get(x.place), x) ?? byPlace.get(x.place)!)
+  return { stamps: (list as BackupStamp[]).filter((s) => !seen.has(s.uid) && seen.add(s.uid)), lit: [...byPlace.values()] }
 }
 
 export interface ImportPlan {
@@ -111,14 +134,18 @@ export interface ImportPlan {
   fresh: BackupStamp[]
   /** 合併後 No. 會撞號，要按時間重新編號 */
   renumber: boolean
+  /** 備份裏的地方（全部交給數據庫合併）；其中手機裏還沒亮的有幾個 */
+  lit: Lit[]
+  newPlaces: number
 }
 
 /** 算出導入會發生甚麼（導入前給用戶看，真正導入時在數據庫交易裏再算一次） */
-export function planImport(existing: Pick<Stamp, 'uid' | 'no' | 'test'>[], incoming: BackupStamp[]): ImportPlan {
+export function planImport(existing: Pick<Stamp, 'uid' | 'no' | 'test'>[], existingLit: Pick<Lit, 'place'>[], incoming: BackupData): ImportPlan {
   const have = new Set(existing.map((s) => s.uid))
-  const fresh = incoming.filter((s) => !have.has(s.uid))
+  const fresh = incoming.stamps.filter((s) => !have.has(s.uid))
   const nos = [...existing, ...fresh].filter((s) => !s.test).map((s) => s.no)
-  return { fresh, renumber: new Set(nos).size !== nos.length }
+  const lit = new Set(existingLit.map((x) => x.place))
+  return { fresh, renumber: new Set(nos).size !== nos.length, lit: incoming.lit, newPlaces: incoming.lit.filter((x) => !lit.has(x.place)).length }
 }
 
 // ---------- 上次備份的時間（只記在這部手機） ----------

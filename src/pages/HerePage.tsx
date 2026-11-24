@@ -8,7 +8,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { SPOT_BY_ID, label, summary, useCountedStamps, useDistricts, type Spot } from '../lib/districts'
 import { monthDay } from '../lib/format'
-import { FIX_TTL, SETTLE, formatDistance, startLocate, type Fix, type LocateError, type LocateHandlers } from '../lib/locate'
+import { ACC_LIMIT, FIX_TTL, SETTLE, formatDistance, startLocate, type Fix, type LocateError, type LocateHandlers } from '../lib/locate'
+import { placeAt } from '../lib/places'
+import { lightPlace } from '../lib/lit'
 import { RADAR_N, SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type Placed, type RadarSpot } from '../lib/radar'
 import { navToSpot } from '../lib/where'
 import { openBook } from '../lib/nav'
@@ -96,6 +98,19 @@ function deniedText() {
   return '沒有定位權限。請按網址列左邊的圖示（或手機「設定」→「應用程式」→ 瀏覽器 →「權限」），允許使用「位置」，然後再按一次。'
 }
 const reduceMotion = () => MOCK || (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false)
+
+/**
+ * 順手點亮人所在的「地方」（M3，Chris 2026-11-20「選 B」）：不加字、不加按鈕，地圖上悄悄變色。
+ * 用這一次按壓最後最準的位置；誤差 > 100 米（跟蓋章同一條線）不亮，免得亮錯隔壁。假位置亮的是測試的。
+ */
+function lightHere(f: Fix) {
+  if (f.acc > ACC_LIMIT) return
+  placeAt(f.lat, f.lng)
+    .then((p) => p && lightPlace(p.id, !!f.fake))
+    .catch(() => {
+      /* 地方的形狀載入不到（離線又未緩存）：這次不亮，下次再按 */
+    })
+}
 
 /** 正中那個東西佔多大（推開別的章用）：可以蓋的大章連上下兩行字；或者只是你的位置點 */
 const AT_FONT = 21
@@ -247,9 +262,10 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
           onReveal() // 抬頭和導航一起浮現
         }
       },
-      onDone: () => {
+      onDone: (best) => {
         cancelRef.current = null
         setRefining(false)
+        lightHere(best)
       },
       onError: (err) => {
         cancelRef.current = null
