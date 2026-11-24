@@ -18,7 +18,8 @@ const PREVIEW = params.get('stamps') === 'preview'
 if (params.get('mock') === '1') {
   mockStamps(params.get('many') === '1' ? manyStamps() : MOCK_STAMPS)
   mockLit(MOCK_LIT)
-  document.documentElement.classList.add('mock') // 截圖時不要動畫
+  // 截圖時不要動畫；加 &anim=1 就照樣播（用假數據在手機上試動畫，例如撥雲見霧）
+  if (params.get('anim') !== '1') document.documentElement.classList.add('mock')
 }
 const wantTab = params.get('tab') ?? (params.get('d') ? 'map' : null)
 const TAB0: Tab = wantTab === 'book' || wantTab === 'me' || wantTab === 'map' ? wantTab : 'here'

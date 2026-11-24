@@ -76,6 +76,8 @@
 | `?here=done&lat=..&lng=..&sel=s001`、`here=locating`、`here=error` | 首頁雷達各狀態的截圖 |
 | `?page=s023`、`&toc=1` | 印章冊翻到某頁 / 打開目錄 |
 | `?stamps=preview` | 8 個章面通用圖案的預覽頁 |
+| `&anim=1`（配 `?mock=1`） | 截圖模式照樣播動畫（在手機上用假數據試動畫） |
+| `?fog=mist` / `part` / `ink` | 撥雲見霧的三種霧（暫時，Chris 選定後刪掉） |
 
 **隱藏測試模式**：「我的」頁連按版本號 5 下（2 秒內）開關。可以「假裝在某景點」、設假定位誤差、蓋「測試章」、一鍵清走測試章。測試章帶 `test: true`，不佔 No.，只在測試模式開着時算進度。
 
@@ -155,7 +157,7 @@
 | `testMode.ts` | 測試模式、假位置（localStorage） | |
 | `install.ts` | 判斷平台（installed / ios / android / inapp / desktop）、安卓安裝事件 | |
 | `nav.ts` | 跨分頁跳轉請求 | |
-| `useMapZoom.ts`（約 380 行） | 地圖捏合縮放 / 拖動 / 橡皮筋 / 慣性 | 移動中只改 CSS transform，停下才重畫 viewBox |
+| `useMapZoom.ts`（約 410 行） | 地圖捏合縮放 / 拖動 / 橡皮筋 / 慣性；`fit`（鏡頭推進到某區，撥雲見霧）、`flyHome` | 移動中只改 CSS transform，停下才重畫 viewBox |
 | `where.ts`、`format.ts`、`mockData.ts` | 小工具；假數據 | `where.ts` 的「就快到了」常數現在沒用（Chris 決定不顯示） |
 
 ### `tools/`（Node 腳本，打包前在本機跑，輸出入庫）

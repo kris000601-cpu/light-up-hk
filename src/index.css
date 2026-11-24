@@ -251,6 +251,91 @@ button {
   stroke: var(--hair);
 }
 
+/* ---------- 撥雲見霧（M3 第 3 步）----------
+   鏡頭推進 0.7 秒（useMapZoom 的 FLY_MS），這段時間整區蓋着霧；到了霧才散開（約 1.2 秒）。
+   所以每段動畫的前 37%（0.7 ÷ 1.9 秒）保持不動。動畫完了的樣子寫在元素本身（截圖模式 ?mock=1 不播動畫，直接是完成的樣子）。 */
+
+/* 薄霧：白霧蓋在米色上；去過的地方的霧散開，沒去過的留着 */
+.fog-mist path {
+  fill: var(--card);
+}
+
+.fog-mist.lift {
+  opacity: 0;
+  animation: fog-lift 1.9s ease-out;
+}
+
+@keyframes fog-lift {
+  0%,
+  37% {
+    opacity: 1;
+  }
+}
+
+/* 撥開：兩大片霧往左右散開 */
+.fog-part rect {
+  fill: var(--card);
+  opacity: 0;
+  transform-box: fill-box;
+  animation: fog-part-l 1.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fog-part rect.r {
+  animation-name: fog-part-r;
+}
+
+@keyframes fog-part-l {
+  0%,
+  37% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-70%);
+  }
+}
+
+@keyframes fog-part-r {
+  0%,
+  37% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(70%);
+  }
+}
+
+.fog-dots path {
+  pointer-events: none;
+}
+
+/* 點墨：沒去過的地方只有虛線；推進到了，去過的地方一塊塊上墨 */
+.hkmap-place-lines path.unlit {
+  stroke-dasharray: 2 3;
+  stroke-opacity: 0.7;
+}
+
+.hkmap-places .ink-in {
+  animation: ink-in 0.7s ease-out backwards;
+}
+
+@keyframes ink-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fog-mist.lift,
+  .fog-part rect,
+  .hkmap-places .ink-in {
+    animation: none;
+  }
+}
+
 .hkmap-selected {
   fill: none;
   stroke: var(--ink);

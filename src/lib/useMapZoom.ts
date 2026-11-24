@@ -30,6 +30,19 @@ const FLING_PAUSE_MS = 60
 /** 橡皮筋：越拉越拉不動，最多拉出 dim 那麼遠（iOS 的做法） */
 const rubber = (d: number, dim: number) => dim * (1 - 1 / ((d * 0.55) / dim + 1))
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3)
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+
+/** 撥雲見霧（M3）：點一個區，鏡頭推進到它；取消選中時拉回全圖。動畫長度（毫秒），霧的動畫按它對時（index.css 的霧要跟着改） */
+export const FLY_MS = 700
+/** 推進時區的四周留多少白（區的寬 / 高的比例） */
+const FIT_PAD = 0.1
+
+/** 推進到範圍 b 時看到的寬度（地圖單位）；不用推進（差不多是全圖）就是全圖的寬 */
+export function fitWidth(b: [number, number, number, number], mapW: number, mapH: number): number {
+  const [x0, y0, x1, y1] = b
+  const w = Math.min(mapW, Math.max((x1 - x0) * (1 + 2 * FIT_PAD), ((y1 - y0) * (1 + 2 * FIT_PAD) * mapW) / mapH, mapW / MAX_SCALE))
+  return mapW / w < SNAP_SCALE ? mapW : w
+}
 
 /**
  * 只讓地圖本身縮放：雙指捏合放大縮小、放大後單指拖動；電腦上用觸控板捏合或 Ctrl + 滾輪。
@@ -107,19 +120,19 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
   )
 
   const animateTo = useCallback(
-    (to: View) => {
+    (to: View, ms = SETTLE_MS, ease = easeOut) => {
       cancelAnimationFrame(anim.current)
       const from = viewRef.current
       const same = Math.abs(from.x - to.x) + Math.abs(from.y - to.y) + Math.abs(from.w - to.w) < 0.01
-      if (same) {
+      if (same || ms <= 0) {
         show(to)
         commit()
         return
       }
       const start = performance.now()
       const step = (now: number) => {
-        const t = Math.min(1, (now - start) / SETTLE_MS)
-        const e = easeOut(t)
+        const t = Math.min(1, (now - start) / ms)
+        const e = ease(t)
         show({
           x: from.x + (to.x - from.x) * e,
           y: from.y + (to.y - from.y) * e,
@@ -136,6 +149,23 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
 
   const settle = useCallback(() => animateTo(target(viewRef.current)), [animateTo, target])
   const reset = useCallback(() => animateTo({ x: 0, y: 0, w: mapW, h: mapH }), [animateTo, mapW, mapH])
+
+  /**
+   * 鏡頭推進到某個範圍 [x0, y0, x1, y1]（地圖座標），四周留一點白；最多放大 MAX_SCALE 倍，
+   * 範圍大到差不多是全圖（例如離島區）就停在全圖。instant：不要動畫（截圖、減少動態效果）
+   */
+  const fit = useCallback(
+    (b: [number, number, number, number], instant = false) => {
+      const [x0, y0, x1, y1] = b
+      const w = fitWidth(b, mapW, mapH)
+      const h = (w * mapH) / mapW
+      const to = target({ x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h })
+      animateTo(to, instant ? 0 : FLY_MS, easeInOut)
+    },
+    [animateTo, target, mapW, mapH],
+  )
+  /** 拉回全圖（取消選中時） */
+  const flyHome = useCallback((instant = false) => animateTo({ x: 0, y: 0, w: mapW, h: mapH }, instant ? 0 : FLY_MS, easeInOut), [animateTo, mapW, mapH])
 
   useEffect(() => {
     const box = boxRef.current
@@ -376,5 +406,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     /** 邊緣漸隱的寬度（像素）：全圖時 0，放大到 1.15 倍時長滿 18px */
     fade: Math.max(0, Math.min(18, ((scale - 1) / 0.15) * 18)),
     reset,
+    fit,
+    flyHome,
   }
 }
