@@ -9,6 +9,7 @@ import { mockStamps } from './lib/stamps'
 import { MOCK_LIT, MOCK_STAMPS, manyStamps } from './lib/mockData'
 import { mockLit } from './lib/lit'
 import { clearNav, useNavRequest } from './lib/nav'
+import { loadPlaces } from './lib/places'
 
 const params = new URLSearchParams(window.location.search)
 // 內部預覽：網址加 ?stamps=preview 看 8 個章面圖案（App 裏沒有入口）
@@ -28,6 +29,11 @@ export default function App() {
   const [revealed, setRevealed] = useState(TAB0 !== 'here' || HOME_MOCK_REVEALED)
   const reveal = useCallback(() => setRevealed(true), [])
   // 跨分頁跳轉（區詳情 → 印章冊那一頁、首頁備份提示 → 我的）：切分頁，翻頁 / 捲動由那一頁自己處理
+  // 地方的形狀比較大，打開後閒下來才載入（地圖要用、首頁按點時判斷在哪個地方也要用）
+  useEffect(() => {
+    const t = setTimeout(() => loadPlaces().catch(() => {}), 1500)
+    return () => clearTimeout(t)
+  }, [])
   const nav = useNavRequest()
   useEffect(() => {
     if (!nav) return

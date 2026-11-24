@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { HKMap, MAP_STYLE } from '../components/HKMap'
+import { HKMap } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
 import { InstallHint } from '../components/InstallHint'
@@ -8,19 +8,12 @@ import { REGIONS, SPOT_BY_ID, regionSummary, summary, useCountedStamps, useDistr
 import { monthDay } from '../lib/format'
 import { reloadStamps, useStamps } from '../lib/stamps'
 
-// 圖例：區按「亮了幾塊地方」由淺到深，全部亮了才紅（「一塊塊」畫法：亮了的地方塗墨藍）
-const LEGEND =
-  MAP_STYLE === 'places'
-    ? [
-        { cls: '', text: '未去過' },
-        { cls: 'lit-place', text: '去過的地方' },
-        { cls: 'level-3', text: '全區點亮' },
-      ]
-    : [
-        { cls: '', text: '未去過' },
-        { cls: 'ramp', text: '亮了幾塊，越多越深' },
-        { cls: 'level-3', text: '全區點亮' },
-      ]
+// 圖例：去過的地方塗墨藍，一個區全部亮了才紅
+const LEGEND = [
+  { cls: '', text: '未去過' },
+  { cls: 'lit-place', text: '去過的地方' },
+  { cls: 'level-3', text: '全區點亮' },
+]
 
 // 網址參數只用於截圖檢查：?d=E 選中某區，&sheet=district 打開區詳情，?region=九龍 打開分組列表
 const params = new URLSearchParams(window.location.search)

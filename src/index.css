@@ -221,7 +221,7 @@ button {
   stroke: var(--hair);
 }
 
-/* M3：亮了的地方（「一塊塊」畫法）、選中區的分塊線、蓋在最上面的區界 */
+/* M3：亮了的地方、選中區的分塊線、蓋在最上面的區界 */
 .hkmap-places path,
 .hkmap-place-lines path,
 .hkmap-outlines path {
@@ -353,12 +353,7 @@ button {
   background: var(--seal);
 }
 
-/* M3 圖例：由淺到深的一條（區按亮了幾塊上色）；亮了的地方（「一塊塊」畫法） */
-.swatch.ramp {
-  width: 26px;
-  background: linear-gradient(to right, rgba(45, 62, 92, 0.12), rgba(45, 62, 92, 0.52));
-}
-
+/* M3 圖例：去過的地方（跟地圖上亮了的地方同一個顏色） */
 .swatch.lit-place {
   background: rgba(45, 62, 92, 0.34);
 }

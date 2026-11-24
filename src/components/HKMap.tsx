@@ -3,22 +3,18 @@ import { MAP_H, MAP_W, label, useDistricts, useLitPlaces, type District } from '
 import { loadPlaces, type PlaceGeo } from '../lib/places'
 import { useMapZoom } from '../lib/useMapZoom'
 
-// 三墨規則：進度 = 墨藍深淺，全部亮了才用印泥紅
-/**
- * 區的顏色（M3，Chris 2026-11-20 定）：按「這區亮了幾塊地方」算深淺，全部亮了才變紅。
- * 一塊都沒亮 = 紙色；亮了一點點就看得出（最淡 12%），差一塊就全亮時約 50%。
- */
-export function districtFill(d: Pick<District, 'frac'>): string {
-  if (d.frac <= 0) return 'var(--card)'
-  if (d.frac >= 1) return 'var(--seal)'
-  return `rgba(45, 62, 92, ${(0.12 + 0.4 * d.frac).toFixed(3)})`
-}
+// 三墨規則：去過 = 墨藍，全部亮了才用印泥紅
+// 「點亮」的畫法（M3，Chris 2026-11-24 選 B）：去過的「地方」一塊塊塗上墨藍，沒去過的是紙色；
+// 一個區的地方全部亮了，整區變印泥紅。點一個區時淡淡畫出它分成幾塊。
+// （放棄的方案 A：整區按亮了幾成由淺變深——在長洲蓋一個章，整個離島區連大嶼山都變灰，像去遍了）
 
-/** 亮了的地方（「一塊塊」畫法）的顏色 */
+/** 亮了的地方的顏色 */
 const PLACE_FILL = 'rgba(45, 62, 92, 0.34)'
 
-// 試看兩種畫法（給 Chris 選，選定後刪掉）：?mapstyle=places = 一塊塊畫出亮了的地方；預設 = 整區按亮了幾成上色
-export const MAP_STYLE: 'district' | 'places' = new URLSearchParams(window.location.search).get('mapstyle') === 'places' ? 'places' : 'district'
+/** 分組列表裏每區的小色塊：一塊都沒亮 = 紙色；亮了一些 = 墨藍；全部亮了 = 紅 */
+export function districtSwatch(d: Pick<District, 'frac'>): string {
+  return d.frac <= 0 ? 'var(--card)' : d.frac >= 1 ? 'var(--seal)' : PLACE_FILL
+}
 
 interface Props {
   selected: District | null
@@ -37,7 +33,6 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
   // 地方的形狀（用到時才載入）
   const [places, setPlaces] = useState<PlaceGeo[] | null>(null)
   useEffect(() => {
-    if (MAP_STYLE !== 'places') return
     let alive = true
     loadPlaces()
       .then((p) => alive && setPlaces(p))
@@ -50,15 +45,11 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
   // 地圖內容只在選中的區、進度改變時才重建；手指移動時不碰它，只改下面的 transform
   const content = useMemo(() => {
     const complete = new Set(districts.filter((d) => d.frac >= 1).map((d) => d.code))
-    const fillOf = (d: District) => {
-      if (selected && selected.code !== d.code) return 'var(--card)'
-      if (MAP_STYLE === 'places') return complete.has(d.code) ? 'var(--seal)' : 'var(--card)'
-      return districtFill(d)
-    }
-    // 「一塊塊」畫法：亮了的地方（全區亮了的已經整區紅，不用再畫）；選中某區時只畫那一區的
-    const litShapes =
-      MAP_STYLE === 'places' && places ? places.filter((p) => litSet.has(p.id) && !complete.has(p.dc) && (!selected || selected.code === p.dc)) : []
-    const selLines = MAP_STYLE === 'places' && places && selected ? places.filter((p) => p.dc === selected.code) : []
+    // 全區亮了 = 紅；其他是紙色，亮了的地方另外畫在上面。聚焦：選中某區時，其他區只剩紙色
+    const fillOf = (d: District) => (complete.has(d.code) && (!selected || selected.code === d.code) ? 'var(--seal)' : 'var(--card)')
+    // 亮了的地方（全區亮了的已經整區紅，不用再畫）；選中某區時只畫那一區的
+    const litShapes = places ? places.filter((p) => litSet.has(p.id) && !complete.has(p.dc) && (!selected || selected.code === p.dc)) : []
+    const selLines = places && selected ? places.filter((p) => p.dc === selected.code) : []
     return (
       <>
         <g className="hkmap-districts">
@@ -75,27 +66,23 @@ export function HKMap({ selected, onSelect, onOpen }: Props) {
             />
           ))}
         </g>
-        {MAP_STYLE === 'places' && (
-          <>
-            <g className="hkmap-places" aria-hidden="true">
-              {litShapes.map((p) => (
-                <path key={p.id} d={p.d} style={{ fill: PLACE_FILL }} />
-              ))}
-            </g>
-            {/* 選中的區：淡淡畫出它分成哪幾塊 */}
-            <g className="hkmap-place-lines" aria-hidden="true">
-              {selLines.map((p) => (
-                <path key={p.id} d={p.d} />
-              ))}
-            </g>
-            {/* 區界畫在最上面（亮了的地方蓋住了區界的內半邊） */}
-            <g className="hkmap-outlines" aria-hidden="true">
-              {districts.map((d) => (
-                <path key={d.code} d={d.d} className={selected && selected.code !== d.code ? 'is-dimmed' : undefined} />
-              ))}
-            </g>
-          </>
-        )}
+        <g className="hkmap-places" aria-hidden="true">
+          {litShapes.map((p) => (
+            <path key={p.id} d={p.d} style={{ fill: PLACE_FILL }} />
+          ))}
+        </g>
+        {/* 選中的區：淡淡畫出它分成哪幾塊 */}
+        <g className="hkmap-place-lines" aria-hidden="true">
+          {selLines.map((p) => (
+            <path key={p.id} d={p.d} />
+          ))}
+        </g>
+        {/* 區界畫在最上面（亮了的地方蓋住了區界的內半邊） */}
+        <g className="hkmap-outlines" aria-hidden="true">
+          {districts.map((d) => (
+            <path key={d.code} d={d.d} className={selected && selected.code !== d.code ? 'is-dimmed' : undefined} />
+          ))}
+        </g>
         {selected && (
           <>
             <defs>
