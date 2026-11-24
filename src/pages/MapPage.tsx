@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { HKMap } from '../components/HKMap'
 import { RegionSheet } from '../components/RegionSheet'
 import { DistrictSheet } from '../components/DistrictSheet'
@@ -36,12 +36,29 @@ export function MapPage() {
   const latest = stamps.at(-1)
   const hasTest = stamps.some((x) => x.test)
 
+  // 選中了某區：點頁面上地圖以外的任何地方（抬頭、圖例、下面的空白）都取消選中（Chris 2026-11-24：以前只有點地圖裏的海才取消）。
+  // 底部面板裏的點擊不算（面板關掉後，地圖上仍選着那一區）。
+  // 掛在整頁的捲動層上、用 onclick 屬性：iPhone Safari 點在沒有點擊處理的空白上，不會把 click 傳到 document。
+  const headRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (!selCode) return
+    const page = headRef.current?.closest<HTMLElement>('.page')
+    if (!page) return
+    page.onclick = (e) => {
+      if ((e.target as Element).closest('.hkmap, .sheet-layer')) return
+      setSelCode(null)
+    }
+    return () => {
+      page.onclick = null
+    }
+  }, [selCode])
+
   const closeRegion = useCallback(() => setRegion(null), [])
   const closeDetail = useCallback(() => setDetailCode(null), [])
 
   return (
     <>
-      <header className="passport-head">
+      <header className="passport-head" ref={headRef}>
         <div className="passport-top">
           <div>
             <span className="eyebrow">遊歷護照 · 編號 0008</span>
