@@ -18,9 +18,11 @@ export interface Lit {
 interface State {
   ready: boolean
   lit: Lit[]
+  /** 上次從數據庫讀取失敗（lit 可能不完整：不要拿來匯出備份） */
+  error: boolean
 }
 
-let state: State = { ready: MOCK, lit: [] }
+let state: State = { ready: MOCK, lit: [], error: false }
 const listeners = new Set<() => void>()
 const set = (patch: Partial<State>) => {
   state = { ...state, ...patch }
@@ -48,10 +50,10 @@ export async function reloadLit(opt: { dropTest?: boolean } = {}) {
     const all = await transact<Lit[], [typeof LIT]>([LIT], 'readonly', ([s], done) => {
       s.getAll().onsuccess = (e) => done((e.target as IDBRequest<Lit[]>).result)
     })
-    set({ ready: true, lit: all })
+    set({ ready: true, lit: all, error: false })
   } catch {
-    // 讀不到就當沒有（印章那邊會提示讀取失敗、可以重試）
-    set({ ready: true })
+    // 讀不到：地圖照舊（少亮幾塊不要緊），但標記出錯，備份要等讀到才可以匯出
+    set({ ready: true, error: true })
   }
 }
 if (!MOCK) reloadLit()

@@ -330,6 +330,7 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
         lat: fix.lat,
         lng: fix.lng,
         acc: fix.acc,
+        at: info.at, // 跟章面上的日期一致（打開蓋章頁那一刻；過了午夜才按也不會對不上）
         ...(p ?? {}),
         ...(fix.fake ? { test: true } : {}),
       })
@@ -417,7 +418,7 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
   const complete = info.visitedAfter >= d.total
 
   const page$ = (
-    <div className="stamp-page" role="dialog" aria-modal="true" aria-label={`蓋章：${spot.name}`}>
+    <div className={`stamp-page${done ? ' is-done' : ''}`} role="dialog" aria-modal="true" aria-label={`蓋章：${spot.name}`}>
       <div className="sp-top">
         <button type="button" className="sp-back" onClick={back} aria-label="返回">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -540,9 +541,10 @@ export function StampPage({ spot, fix, distance, onClose, onSaved }: Props) {
             </span>
           </div>
           <span className="sp-sub">
+            {/* 區變不變紅看「地方」亮了幾塊（見 districts.ts），這裏只講景點，不承諾變紅 */}
             {complete
-              ? `${label(d)}的 ${d.total} 個景點全部集齊，地圖上的${label(d)}變成紅色了。`
-              : `每來一次就多一個章。集齊 ${d.total} 個景點，${label(d)}會變紅。`}
+              ? `${label(d)}的 ${d.total} 個景點全部集齊了。`
+              : `每來一次就多一個章。${label(d)}還有 ${d.total - info.visitedAfter} 個景點未去。`}
           </span>
           {saveError && (
             <span className="sp-error" role="alert">

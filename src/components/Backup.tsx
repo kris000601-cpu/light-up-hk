@@ -1,7 +1,7 @@
 // 備份的介面：「我的」頁的備份卡（匯出 / 從備份還原），和首頁「有幾個章還沒備份」的提示。
 import { useEffect, useRef, useState } from 'react'
 import { hideBackupHint, backupHintHidden, markBackedUp, planImport, readBackup, saveBackup, useLastBackup, type BackupError, type BackupStamp } from '../lib/backup'
-import { useLit, type Lit } from '../lib/lit'
+import { reloadLit, useLit, type Lit } from '../lib/lit'
 import { isIOS } from '../lib/install'
 import { clearNav, navigate, useNavRequest } from '../lib/nav'
 import { importStamps, useStamps } from '../lib/stamps'
@@ -19,13 +19,15 @@ const ERRORS: Record<BackupError, string> = {
 
 /** 沒備份的章（正式章；測試模式開着時也算測試章）；lits：一起匯出的點亮了的地方 */
 function useUnbacked() {
-  const { stamps, ready } = useStamps()
-  const { lit } = useLit()
+  const { stamps, ready: stampsReady } = useStamps()
+  const { lit, ready: litReady, error: litError } = useLit()
+  // 章和點亮的地方都讀到了才算準備好（否則匯出的備份會漏掉地方）
+  const ready = stampsReady && litReady && !litError
   const test = useTestMode()
   const last = useLastBackup()
   const list = test ? stamps : stamps.filter((s) => !s.test)
   const lits = test ? lit : lit.filter((x) => !x.test)
-  return { ready, list, lits, last, since: last ? list.filter((s) => s.at > last).length : list.length }
+  return { ready, litError, list, lits, last, since: last ? list.filter((s) => s.at > last).length : list.length }
 }
 
 interface Pending {
@@ -45,7 +47,7 @@ interface Pending {
 export function BackupCard() {
   const { stamps } = useStamps()
   const { lit } = useLit()
-  const { ready, list, lits, last, since } = useUnbacked()
+  const { ready, litError, list, lits, last, since } = useUnbacked()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
@@ -118,7 +120,14 @@ export function BackupCard() {
         備份檔案存着你所有的章（日子、地點、蓋在紙上的位置）和點亮了的地方。換手機、清除了瀏覽器資料，或者想把瀏覽器裏蓋的章搬到主畫面 App，都可以用它還原。
       </p>
       <p className="backup-state">
-        {!ready
+        {litError ? (
+          <>
+            讀取不到點亮了的地方。{' '}
+            <button type="button" className="link" onClick={() => reloadLit()}>
+              再試一次
+            </button>
+          </>
+        ) : !ready
           ? '讀取中…'
           : !list.length && !lits.length
             ? '還沒有章，蓋了章再備份。'

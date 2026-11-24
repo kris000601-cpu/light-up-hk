@@ -140,12 +140,17 @@ export interface ImportPlan {
 }
 
 /** 算出導入會發生甚麼（導入前給用戶看，真正導入時在數據庫交易裏再算一次） */
-export function planImport(existing: Pick<Stamp, 'uid' | 'no' | 'test'>[], existingLit: Pick<Lit, 'place'>[], incoming: BackupData): ImportPlan {
+export function planImport(existing: Pick<Stamp, 'uid' | 'no' | 'test'>[], existingLit: Lit[], incoming: BackupData): ImportPlan {
   const have = new Set(existing.map((s) => s.uid))
   const fresh = incoming.stamps.filter((s) => !have.has(s.uid))
   const nos = [...existing, ...fresh].filter((s) => !s.test).map((s) => s.no)
-  const lit = new Set(existingLit.map((x) => x.place))
-  return { fresh, renumber: new Set(nos).size !== nos.length, lit: incoming.lit, newPlaces: incoming.lit.filter((x) => !lit.has(x.place)).length }
+  // 跟真正寫入時（importStamps）同一套規則：本來沒亮的、或本來只是測試亮的，都算會加進去
+  const mine = new Map(existingLit.map((x) => [x.place, x]))
+  const newPlaces = incoming.lit.filter((x) => {
+    const rec = mergeLit(mine.get(x.place), x)
+    return !!rec && (!mine.has(x.place) || (mine.get(x.place)!.test && !rec.test))
+  }).length
+  return { fresh, renumber: new Set(nos).size !== nos.length, lit: incoming.lit, newPlaces }
 }
 
 // ---------- 上次備份的時間（只記在這部手機） ----------

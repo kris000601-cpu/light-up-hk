@@ -6,6 +6,7 @@
 import { useSyncExternalStore } from 'react'
 import { LIT, MOCK, STAMPS, transact, uuid } from './db'
 import { mergeLit, reloadLit, type Lit } from './lit'
+import { holdUpdates } from './updates'
 
 export interface Stamp {
   /** 這部手機裏的自動編號（只在本機有意義） */
@@ -80,23 +81,25 @@ document.addEventListener('visibilitychange', () => {
 })
 
 /** 蓋一個章；寫進手機成功才回傳，失敗會拋出錯誤（由蓋章頁提示重試） */
-export async function addStamp(s: NewStamp): Promise<Stamp> {
+export async function addStamp(s: NewStamp & { at?: number }): Promise<Stamp> {
   if (mocked) {
     // 截圖模式：只加在畫面上，不寫進手機
     const no = state.stamps.reduce((m, x) => (x.test ? m : Math.max(m, x.no)), 0) + 1
-    const stamp: Stamp = { ...s, uid: uuid(), no, at: Date.now(), id: -(state.stamps.length + 1) }
+    const stamp: Stamp = { ...s, uid: uuid(), no, at: s.at ?? Date.now(), id: -(state.stamps.length + 1) }
     set({ stamps: [...state.stamps, stamp] })
     return stamp
   }
+  // 寫進手機期間不讓自動更新重新載入頁面（蓋章頁剛好關掉也一樣）
+  const release = holdUpdates()
   const stamp = await transact<Stamp, [typeof STAMPS]>([STAMPS], 'readwrite', ([store], done) => {
     // 編號在同一個交易裏數：兩個分頁同時蓋也不會撞號；清走測試章也不會影響
     store.getAll().onsuccess = (e) => {
       const all = (e.target as IDBRequest<Stamp[]>).result
       const no = all.reduce((m, x) => (x.test ? m : Math.max(m, x.no)), 0) + 1
-      const rec = { ...s, uid: uuid(), no, at: Date.now() }
+      const rec = { ...s, uid: uuid(), no, at: s.at ?? Date.now() }
       store.add(rec).onsuccess = (ev) => done({ ...rec, id: Number((ev.target as IDBRequest).result) })
     }
-  })
+  }).finally(release)
   await reloadStamps()
   // 有章了才申請「持久儲存」：瀏覽器空間不夠時不要清走印章
   requestPersist()
@@ -112,12 +115,14 @@ export async function addStamp(s: NewStamp): Promise<Stamp> {
 export async function importStamps(list: Omit<Stamp, 'id'>[], lit: Lit[] = []): Promise<{ added: number; renumbered: boolean; places: number }> {
   if (mocked) return { added: 0, renumbered: false, places: 0 }
   const res = { added: 0, renumbered: false, places: 0 }
+  const release = holdUpdates() // 導入期間不讓自動更新重新載入頁面
   await transact<typeof res, [typeof STAMPS, typeof LIT]>([STAMPS, LIT], 'readwrite', ([store, litStore], done) => {
     done(res) // 下面的回呼會填好數字；交易寫完才交出去
     store.getAll().onsuccess = (e) => {
       const all = (e.target as IDBRequest<Stamp[]>).result
       const have = new Set(all.map((s) => s.uid))
-      const fresh = list.filter((s) => !have.has(s.uid))
+      // 複製一份：重新編號會改 no，不要改到傳進來的（失敗重試時要用原來的）
+      const fresh = list.filter((s) => !have.has(s.uid)).map((s) => ({ ...s }))
       const nos = [...all, ...fresh].filter((s) => !s.test).map((s) => s.no)
       const renumbered = new Set(nos).size !== nos.length
       if (renumbered) {
@@ -135,11 +140,12 @@ export async function importStamps(list: Omit<Stamp, 'id'>[], lit: Lit[] = []): 
         for (const x of lit) {
           const rec = mergeLit(mine.get(x.place), x)
           if (!rec) continue
-          if (!mine.has(x.place)) res.places++
+          // 數「多亮了幾個」：本來沒亮的，或本來只是測試亮的（換成真的）
+          if (!mine.has(x.place) || (mine.get(x.place)!.test && !rec.test)) res.places++
           litStore.put(rec)
         }
       }
-  })
+  }).finally(release)
   await Promise.all([reloadStamps(), reloadLit()])
   if (res.added || res.places) requestPersist()
   return res

@@ -15,7 +15,7 @@ import { RADAR_N, SEAL_TRACK, layoutRadar, radarSpots, sealSize, shortName, type
 import { navToSpot } from '../lib/where'
 import { openBook } from '../lib/nav'
 import { useStamps, type Stamp } from '../lib/stamps'
-import { getFakeLocation } from '../lib/testMode'
+import { getFakeLocation, useFakeLocation, useTestMode } from '../lib/testMode'
 import { isIOS, platform } from '../lib/install'
 import { StampPage } from '../components/StampPage'
 import { BrowserWarnSheet, mustInstallToStamp } from '../components/BrowserWarn'
@@ -103,10 +103,14 @@ const reduceMotion = () => MOCK || (window.matchMedia?.('(prefers-reduced-motion
  * 順手點亮人所在的「地方」（M3，Chris 2026-11-20「選 B」）：不加字、不加按鈕，地圖上悄悄變色。
  * 用這一次按壓最後最準的位置；誤差 > 100 米（跟蓋章同一條線）不亮，免得亮錯隔壁。假位置亮的是測試的。
  */
-function lightHere(f: Fix) {
+function lightHere(f: Fix, done?: Set<string>) {
   if (f.acc > ACC_LIMIT) return
   placeAt(f.lat, f.lng)
-    .then((p) => p && lightPlace(p.id, !!f.fake))
+    .then((p) => {
+      if (!p || done?.has(p.id)) return
+      done?.add(p.id)
+      return lightPlace(p.id, !!f.fake)
+    })
     .catch(() => {
       /* 地方的形狀載入不到（離線又未緩存）：這次不亮，下次再按 */
     })
@@ -245,8 +249,11 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
     setSlow(false)
     const slowTimer = setTimeout(() => setSlow(true), SETTLE + 500)
     let first = true
+    const litNow = new Set<string>() // 這次按壓已經點亮過的地方（位置變準時不重複寫）
     const handlers: LocateHandlers = {
       onFix: (f) => {
+        // 一拿到夠準的位置就點亮人所在的地方，不等「對準」結束（中途切走、鎖屏也不會漏）
+        lightHere(f, litNow)
         const d = radarSpots(f, RADAR_N, arrivedRef.current)
         for (const x of [d.center, ...d.around]) if (x?.can) arrivedRef.current.add(x.spot.id)
         const centerId = d.center?.spot.id ?? null
@@ -265,7 +272,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
       onDone: (best) => {
         cancelRef.current = null
         setRefining(false)
-        lightHere(best)
+        lightHere(best, litNow)
       },
       onError: (err) => {
         cancelRef.current = null
@@ -285,24 +292,50 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   }, [onReveal])
   useEffect(() => () => cancelRef.current?.(), [])
 
+  // 作廢目前的結果，回到一點 + 波紋（位置太舊、或者測試模式關掉了）
+  const expire = useCallback((expired: boolean) => {
+    cancelRef.current?.()
+    cancelRef.current = null
+    setRefining(false)
+    setState(expired ? { k: 'idle', expired: true } : { k: 'idle' })
+    setBasis(null)
+    setSel(null)
+    setWarnFor(null)
+    setJust(null)
+  }, [])
+
+  // 測試模式關掉、或者「假裝在這」取消了：用假位置得出的結果作廢（假位置不會過期，不清的話會一直顯示「你已到達」）
+  const testOn = useTestMode()
+  const fakeNow = useFakeLocation()
+  useEffect(() => {
+    const st = stateRef.current
+    if (MOCK || DEMO || st.k !== 'done' || !st.fix.fake) return
+    if (!testOn || !fakeNow) expire(false)
+  }, [testOn, fakeNow, expire])
+
   // 位置太舊就作廢（從後台回來、或者從別的分頁切回來時檢查），要再按一次
   useEffect(() => {
     const check = () => {
-      if (document.visibilityState !== 'visible') return
+      if (document.visibilityState !== 'visible') {
+        // 切到後台：立刻停止讀位置（規則：只在按的那一下讀，不在後台讀）
+        if (cancelRef.current) {
+          cancelRef.current()
+          cancelRef.current = null
+          setRefining(false)
+          if (stateRef.current.k === 'locating') setState({ k: 'idle' })
+        }
+        return
+      }
       // 正在蓋章（蓋章頁開着）時不作廢：蓋章頁用的是打開時的位置
       if (stampOpen.current) return
       const st = stateRef.current
       if (st.k !== 'done' || st.fix.fake || MOCK || Date.now() - st.fix.at <= FIX_TTL) return
-      cancelRef.current?.()
-      setState({ k: 'idle', expired: true })
-      setBasis(null)
-      setSel(null)
-      setWarnFor(null)
+      expire(true)
     }
     if (active) check()
     document.addEventListener('visibilitychange', check)
     return () => document.removeEventListener('visibilitychange', check)
-  }, [active])
+  }, [active, expire])
 
   // 浮現（像雷達找到東西）：一圈波紋從正中慢慢掃出去，掃到哪個章，那個章就在原地從紙底下慢慢透出來
   // （由淡到濃、由模糊到清楚，位置一點都不動），不飛、不彈、不往上移。近的先出現。
@@ -355,7 +388,7 @@ export function HerePage({ active, revealed, onReveal }: { active: boolean; reve
   const stamp = (it: RadarSpot) => {
     if (!fix) return
     if (!fix.fake && Date.now() - fix.at > FIX_TTL) {
-      setState({ k: 'idle', expired: true })
+      expire(true)
       return
     }
     if (mustInstallToStamp()) {

@@ -266,7 +266,11 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
       }
     }
 
+    // 浮在地圖上的按鈕（區名標籤、「全圖」）不算地圖手勢：按它們不會打斷推進、拖動，點擊也不會被吞掉
+    const onControl = (e: Event) => !!(e.target as Element | null)?.closest?.('.hkmap-tag, .hkmap-reset')
+
     const onTouchStart = (e: TouchEvent) => {
+      if (onControl(e)) return
       // 滑行中手指一碰就停；這一下只算「接住」，不會選到區
       const caught = flinging
       flinging = false
@@ -279,6 +283,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     }
 
     const onTouchMove = (e: TouchEvent) => {
+      if (onControl(e)) return
       if (!start) return
       const t = e.touches
       if (t.length >= 2 && start.dist) {
@@ -307,6 +312,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     }
 
     const onTouchEnd = (e: TouchEvent) => {
+      if (onControl(e)) return
       if (moved) suppressUntil.current = performance.now() + 400
       const raw = panRaw
       const v = e.touches.length === 0 && raw ? releaseVelocity() : null
@@ -334,6 +340,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
 
     let drag: { view: View; sx: number; sy: number } | null = null
     const onMouseDown = (e: MouseEvent) => {
+      if (onControl(e)) return
       if (e.button !== 0 || !zoomed()) return
       const caught = flinging
       flinging = false
@@ -365,6 +372,7 @@ export function useMapZoom(boxRef: RefObject<HTMLElement | null>, mapW: number, 
     }
 
     const onClickCapture = (e: MouseEvent) => {
+      if (onControl(e)) return
       if (performance.now() < suppressUntil.current) {
         suppressUntil.current = 0
         e.stopPropagation()

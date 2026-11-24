@@ -86,12 +86,15 @@ export function placeStamps(stamps: Stamp[]): Placed[] {
 }
 
 const WEEK = ['日', '一', '二', '三', '四', '五', '六']
+const HK_YMD = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: 'numeric', day: 'numeric' })
 /** 香港時間的年、月、日、星期幾 */
 export function hkParts(ms: number) {
-  const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Hong_Kong', year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short' }).formatToParts(ms)
-  const get = (t: string) => p.find((x) => x.type === t)?.value ?? ''
-  const wd = WEEK[['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'))]
-  return { y: +get('year'), m: +get('month'), d: +get('day'), wd }
+  const p = HK_YMD.formatToParts(ms)
+  const get = (t: string) => +(p.find((x) => x.type === t)?.value ?? 0)
+  const y = get('year'), m = get('month'), d = get('day')
+  // 星期幾由日子自己算（不靠英文縮寫：有些瀏覽器會寫成「Thu.」，查表就查不到）
+  const wd = WEEK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]
+  return { y, m, d, wd }
 }
 const pad = (n: number) => String(n).padStart(2, '0')
 /** 「2026.11.19（四）」 */
